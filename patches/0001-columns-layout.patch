@@ -1,0 +1,48 @@
+--- a/src/layout.hpp
++++ b/src/layout.hpp
+@@ -65,9 +65,23 @@
+     return rectangles;
+ }
+ 
++// Equal-width columns use the same pure geometry contract as tile.
++inline std::vector<Rect> columns(Rect area, int count, double, int gap, int = 1) {
++    if (count <= 0) return {};
++    gap = std::clamp(gap, 0, std::max(0, std::min((area.width-count)/(count+1), (area.height-1)/2)));
++    const int usable = std::max(count, area.width - gap * (count + 1));
++    std::vector<Rect> rectangles;
++    rectangles.reserve(count);
++    for (int index=0; index<count; ++index) {
++        const int left=usable*index/count, right=usable*(index+1)/count;
++        rectangles.push_back({area.x+gap*(index+1)+left, area.y+gap,
++                              std::max(1,right-left), std::max(1,area.height-2*gap)});
++    }
++    return rectangles;
++}
+ struct Layout {
+     const char *symbol;
+     LayoutFn arrange; // nullptr selects floating layout.
+ };
+-inline constexpr std::array layouts{Layout{"t", tile}, Layout{"f", nullptr}, Layout{"m", monocle}};
++inline constexpr std::array layouts{Layout{"t", tile}, Layout{"f", nullptr}, Layout{"m", monocle}, Layout{"|||", columns}};
+ } // namespace ppwm
+--- a/tests/layout_test.cpp
++++ b/tests/layout_test.cpp
+@@ -38,5 +38,8 @@
+     check(masters[2] == Rect{550, 0, 450, 400} && masters[3] == Rect{550, 400, 450, 400});
+     auto no_master = tile({0, 0, 1000, 800}, 2, 0.55, 0, 0);
+     check(no_master[0] == Rect{0, 0, 1000, 400} && no_master[1] == Rect{0, 400, 1000, 400});
++    auto columns_result=columns({0,24,1000,776},3,0.5,8);
++    check(columns_result.size()==3 && columns_result[0]==Rect{8,32,322,760});
++    check(columns_result[1]==Rect{338,32,323,760} && columns_result[2]==Rect{669,32,323,760});
+     std::cout << "layout invariants passed\n";
+ }
+--- a/src/keys.hpp
++++ b/src/keys.hpp
+@@ -37,6 +37,7 @@
+ };
+ inline constexpr unsigned alt = modifier, shift = modifier | ShiftMask;
+ inline constexpr Binding keys[]{
++    {alt | ControlMask, XK_c, Action::Layout, 3},
+     {alt, XK_a, Action::Spawn, 0, terminal},
+     {alt, XK_p, Action::Spawn, 0, launcher},
+     {alt, XK_s, Action::Spawn, 0, "\"$HOME/.local/bin/browser\""},
