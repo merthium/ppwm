@@ -6,6 +6,7 @@
 #include "workspace.hpp"
 #include "x11_connection.hpp"
 #include <X11/Xutil.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -14,6 +15,7 @@ struct Client {
     Window window{};
     std::string title;
     TagMask tags{1};
+    std::uint64_t focus_order{};
     bool terminal{};
     Window swallowed_by{}, terminal_window{};
     bool floating{}, fullscreen{}, mapped{}, input{true}, hidden{}, scratchpad{};
@@ -26,7 +28,9 @@ class WindowManager {
     ProcessLookup processes_{display_};
     int screen_number_{}, screen_width_{}, screen_height_{};
     Window root_window_{}, support_window_{}, focused_window_{};
+    Cursor normal_cursor_{}, move_cursor_{}, resize_cursor_{};
     unsigned numlock_mask_{};
+    std::uint64_t focus_serial_{};
     Workspace workspace_;
     bool restart_requested_{};
     Window preview_window_{};
@@ -64,6 +68,7 @@ class WindowManager {
     void handle_motion(const XMotionEvent &);
     void handle_client_message(const XClientMessageEvent &);
     void grab_keys();
+    void grab_buttons(const Client &, bool focused);
     void view_tag(unsigned);
     void view_tags(TagMask, bool toggle = false);
     bool on_current_tags(const Client &) const;

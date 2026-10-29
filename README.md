@@ -11,7 +11,7 @@ Gerçek Xephyr oturumundan alınmıştır; görüntüdeki istemciler demo progra
 - Pencere gizleme, geçici önizleme, scratchpad ve terminal swallowing.
 - Alt ile fareden taşıma/boyutlandırma ve kenarlara yaslama.
 - Entegre alt bar: pil, saat, keep-awake durumu ve XEmbed sistem tepsisi.
-- Siyah/gri palet, Fragment Mono, 2 px kenarlık, sıfır boşluk.
+- Siyah/gri palet, 14 px Lilex Nerd Font Mono, 2 px kenarlık, sıfır boşluk.
 - Kaynak dosyalarından değiştirilebilen ayarlar, kısayollar, yerleşimler ve bar modülleri.
 
 Bar, X olaylarından bağımsız olarak **2 saniyede bir** yenilenir. Pencere ve tepsi protokolleri X11 olaylarını işler. İş yokken ana döngü `poll()` içinde bekler.
@@ -35,13 +35,13 @@ cmake --install build --prefix "$HOME/.local"
 
 ## Deneme
 
-Xephyr ve xdotool kurulu bir X11 masaüstünde:
+Xephyr ve xdotool kurulu bir X11 masaüstünde (Xfixes geliştirme dosyaları varsa imleç görüntüsü testi de derlenir):
 
 ```sh
 python3 scripts/nested-test.py
 ```
 
-Test, boş bir ekran numarasını otomatik seçer. Pencere, klavye/fare, bar, swallowing, tray ve yük testlerini bu ekranda çalıştırır; sonunda kendi süreçlerini kapatır. Test programları yanlışlıkla ana masaüstünde çalıştırılmayı reddeder.
+Test, boş bir ekran numarasını otomatik seçer ve ana masaüstünün fare hareketlerini almayan, eşlenmemiş bir üst pencere içinde çalışır. Pencere, klavye/fare, bar, swallowing, tray ve yük testlerini bu ekranda çalıştırır; sonunda kendi süreçlerini kapatır. Test programları yanlışlıkla ana masaüstünde çalıştırılmayı reddeder.
 
 Elle incelemek için kullanılmayan bir ekran numarasıyla iki terminal aç:
 
@@ -94,7 +94,7 @@ Ses, parlaklık, ekran görüntüsü ve diğer uygulama komutları `src/keys.hpp
 
 `src/config.hpp` renkleri, fontu, boşlukları, bar periyodunu, tepsi boyutlarını ve pencere kurallarını tutar. Değişiklikten sonra yeniden derle ve ppwm'yi yeniden başlat.
 
-Varsayılan terminal `urxvtc +j || urxvt +j`, başlatıcı `dmenu_run`'dır. Bazı uygulama tuşları `$HOME/.local/bin` altındaki yardımcı komutları çağırır; bu komutlar depoya dahil değildir. Kendi uygulamalarınla değiştirebilirsin. Fontconfig, Fragment Mono bulunamazsa bir yedek font seçer.
+Varsayılan terminal `urxvtc +j || urxvt +j`, başlatıcı `dmenu_run`'dır. Bazı uygulama tuşları `$HOME/.local/bin` altındaki yardımcı komutları çağırır; bu komutlar depoya dahil değildir. Kendi uygulamalarınla değiştirebilirsin. Fontconfig, Lilex Nerd Font Mono bulunamazsa bir yedek font seçer. Yapay kalınlık uygulanmaz; seçili pencere alt çizgiyle, gizli pencereler ve boş etiketler daha sönük renkle ayrılır.
 
 Pil kaynağı `/sys/class/power_supply/BAT0/capacity` olarak ayarlıdır. Keep-awake modülü `$HOME/.cache/keep-awake/running.lock` dosyasının kilit durumunu okur. Modüller shell komutu başlatmaz.
 

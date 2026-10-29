@@ -1,6 +1,7 @@
 #include "window_manager.hpp"
 #include "config.hpp"
 #include <X11/Xatom.h>
+#include <X11/cursorfont.h>
 #include <X11/keysym.h>
 #include <algorithm>
 #include <cerrno>
@@ -77,6 +78,10 @@ WindowManager::WindowManager() : workspace_({.master_ratio = config::master_rati
         throw std::runtime_error("another window manager already owns this display");
     }
     XSetErrorHandler(error_handler);
+    normal_cursor_ = XCreateFontCursor(display_, XC_left_ptr);
+    move_cursor_ = XCreateFontCursor(display_, XC_fleur);
+    resize_cursor_ = XCreateFontCursor(display_, XC_sizing);
+    XDefineCursor(display_, root_window_, normal_cursor_);
     XColor color{}, exact{};
     XAllocNamedColor(display_, DefaultColormap(display_, screen_number_), config::normal_border,
                      &color, &exact);
@@ -155,6 +160,10 @@ WindowManager::~WindowManager() {
     tray_.reset();
     bar_.reset();
     XDestroyWindow(display_, support_window_);
+    XUndefineCursor(display_, root_window_);
+    XFreeCursor(display_, normal_cursor_);
+    XFreeCursor(display_, move_cursor_);
+    XFreeCursor(display_, resize_cursor_);
     XSync(display_, False);
 }
 void WindowManager::quit() {

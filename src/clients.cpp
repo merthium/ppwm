@@ -99,13 +99,7 @@ void WindowManager::manage_window(Window window) {
     XSelectInput(display_, window, PropertyChangeMask | EnterWindowMask);
     XSetWindowBorderWidth(display_, window, config::border);
     XSetWindowBorder(display_, window, normal_border_);
-    for (unsigned mask :
-         {0u, static_cast<unsigned>(LockMask), numlock_mask_, numlock_mask_ | LockMask}) {
-        for (unsigned b : {Button1, Button2, Button3})
-            XGrabButton(display_, b, config::modifier | mask, window, False,
-                        ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync,
-                        GrabModeAsync, None, None);
-    }
+    grab_buttons(client, false);
     clients_.insert(clients_.begin(), client);
     auto &added = clients_.front();
     publish_client_tags(added);
@@ -242,13 +236,11 @@ void WindowManager::arrange() {
     }
     auto *selected = find_client(focused_window_);
     if (!selected || !is_visible(*selected)) {
-        Window next = None;
-        for (auto &client : clients_)
-            if (is_visible(client)) {
-                next = client.window;
-                break;
-            }
-        focus(next);
+        const Client *recent = nullptr;
+        for (const auto &client : clients_)
+            if (is_visible(client) && (!recent || client.focus_order > recent->focus_order))
+                recent = &client;
+        focus(recent ? recent->window : None);
     }
     for (const auto &client : clients_) {
         if (is_visible(client) && client.fullscreen) {
@@ -312,14 +304,18 @@ void WindowManager::focus(Window window) {
         }
         preview_window_ = None;
     }
-    if (auto *old = find_client(focused_window_))
+    if (auto *old = find_client(focused_window_)) {
         XSetWindowBorder(display_, old->window, normal_border_);
+        grab_buttons(*old, false);
+    }
     focused_window_ = next ? window : None;
     if (!next) {
         XSetInputFocus(display_, root_window_, RevertToPointerRoot, CurrentTime);
         XDeleteProperty(display_, root_window_, atom("_NET_ACTIVE_WINDOW"));
         return;
     }
+    next->focus_order = ++focus_serial_;
+    grab_buttons(*next, true);
     XSetWindowBorder(display_, window, focused_border_);
     if (next->input)
         XSetInputFocus(display_, window, RevertToPointerRoot, CurrentTime);

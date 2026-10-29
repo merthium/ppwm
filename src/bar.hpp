@@ -32,13 +32,15 @@ class Bar {
     XftDraw *text_draw_{};
     XftFont *font_{};
     XftColor foreground_{}, background_{}, selection_{};
+    XftColor muted_{}, bright_{}, title_background_{}, divider_{};
+    enum class TextStyle { Normal, Selected, Title, Hidden };
     int width_{};
     struct HitRegion {
         int left, right;
         BarHit hit;
     };
     std::vector<HitRegion> regions_;
-    void draw_text(int x, int width, const std::string &value, bool active = false);
+    void draw_text(int x, int width, const std::string &value, TextStyle style = TextStyle::Normal);
 
   public:
     Bar(Display *, int, int);

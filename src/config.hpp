@@ -14,8 +14,10 @@ inline constexpr bool topbar = false, view_on_tag = true;
 inline constexpr double master_ratio = 0.55, ratio_step = 0.03;
 inline constexpr auto bar_interval = std::chrono::milliseconds(2000);
 inline constexpr char font[] =
-    "Fragment Mono:style=Regular:size=14:antialias=true:hinting=true:embolden=true";
+    "Lilex Nerd Font Mono:style=Regular:pixelsize=14:antialias=true:hinting=true";
 inline constexpr char background[] = "#000000", foreground[] = "#a0a0a0", accent[] = "#202020";
+inline constexpr char bar_muted[] = "#686868", bar_bright[] = "#e0e0e0";
+inline constexpr char bar_title_background[] = "#101010", bar_divider[] = "#353535";
 inline constexpr char normal_border[] = "#202020", selected_border[] = "#808080";
 inline constexpr char terminal[] = "urxvtc +j || urxvt +j";
 inline constexpr char launcher[] =

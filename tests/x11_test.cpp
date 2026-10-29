@@ -198,8 +198,7 @@ int main() {
     check(std::system("xdotool key --clearmodifiers alt+0") == 0, "view all fullscreen tags");
     wait();
     const Window fullscreen_focus = value(root, "_NET_ACTIVE_WINDOW");
-    check((fullscreen_focus == a && above(a, b)) ||
-              (fullscreen_focus == b && above(b, a)),
+    check((fullscreen_focus == a && above(a, b)) || (fullscreen_focus == b && above(b, a)),
           "combined tags keep focused fullscreen above other fullscreen windows");
     send(root, "_NET_CURRENT_DESKTOP", 1);
     send(a, "_NET_WM_DESKTOP", 1);
@@ -226,6 +225,38 @@ int main() {
     XGetWindowAttributes(d, a, &aa);
     check(aa.map_state == IsViewable && value(a, "WM_STATE") == NormalState,
           "client MapRequest restores explicitly hidden client");
+    send(a, "_NET_ACTIVE_WINDOW", 1);
+    check(std::system("xdotool key --clearmodifiers alt+h") == 0, "hide before activation");
+    wait();
+    send(a, "_NET_ACTIVE_WINDOW", 1);
+    XGetWindowAttributes(d, a, &aa);
+    check(aa.map_state == IsViewable && value(root, "_NET_ACTIVE_WINDOW") == a,
+          "activation remaps hidden client on the current tag");
+    Window input_focus{};
+    int revert{};
+    for (int transition = 0; transition < 12; ++transition) {
+        send(root, "_NET_CURRENT_DESKTOP", 2);
+        send(root, "_NET_CURRENT_DESKTOP", 1);
+        XGetInputFocus(d, &input_focus, &revert);
+        check(value(root, "_NET_ACTIVE_WINDOW") == a && input_focus == a,
+              "repeated tag returns restore the last focused client, not its master");
+    }
+    XGetWindowAttributes(d, a, &aa);
+    XWarpPointer(d, None, a, 0, 0, 0, 0, aa.width / 2, aa.height / 2);
+    XSync(d, False);
+    wait();
+    send(b, "_NET_ACTIVE_WINDOW", 1);
+    XSelectInput(d, a, ButtonPressMask | ButtonReleaseMask);
+    XSync(d, False);
+    check(std::system("xdotool click 1") == 0, "click client beneath stationary pointer");
+    wait();
+    XGetInputFocus(d, &input_focus, &revert);
+    check(value(root, "_NET_ACTIVE_WINDOW") == a && input_focus == a,
+          "clicking an unfocused client focuses it even without a new pointer crossing");
+    XEvent click{};
+    check(XCheckTypedWindowEvent(d, a, ButtonPress, &click) &&
+              XCheckTypedWindowEvent(d, a, ButtonRelease, &click),
+          "focus click is replayed to the application, including release");
     XUnmapWindow(d, b);
     XSync(d, False);
     wait();

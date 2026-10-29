@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 import shutil
+import select
 import subprocess
 import sys
 import tempfile
@@ -19,11 +20,20 @@ processes = []
 with tempfile.TemporaryDirectory(prefix='ppwm-test-') as folder:
     log_path = Path(folder) / 'xephyr.log'
     try:
+        # Keep real desktop input out of synthetic pointer/focus tests.
+        host = subprocess.Popen([str(build / 'xephyr_host')], stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, text=True)
+        processes.append(host)
+        if not select.select([host.stdout], [], [], 5)[0]:
+            raise RuntimeError('Timed out creating isolated test surface')
+        parent_window = host.stdout.readline().strip()
+        if not parent_window.isdigit():
+            raise RuntimeError('Cannot create isolated test surface')
         # Let the X server choose an unused display; never reuse the host display.
         read_fd, write_fd = os.pipe()
         os.set_blocking(read_fd, False)
         with log_path.open('w') as log:
-            server = subprocess.Popen(['Xephyr', '-displayfd', str(write_fd), '-screen',
+            server = subprocess.Popen(['Xephyr', '-parent', parent_window, '-displayfd', str(write_fd), '-screen',
                                        '1024x768', '-ac', '-nolisten', 'tcp'],
                                       pass_fds=(write_fd,), stdout=log, stderr=log)
             processes.append(server)
@@ -57,6 +67,8 @@ with tempfile.TemporaryDirectory(prefix='ppwm-test-') as folder:
                                     text=True, timeout=5)
             if second.returncode != 1 or 'another window manager' not in second.stderr:
                 raise RuntimeError('Second WM ownership guard failed')
+            if (build / 'cursor_test').exists():
+                subprocess.run([str(build / 'cursor_test')], env=env, check=True, timeout=5)
             subprocess.run([str(build / 'x11_test')], env=env, check=True, timeout=30)
             subprocess.run([str(build / 'swallow_test')], env=env, check=True, timeout=30)
             subprocess.run([str(build / 'bar_test')], env=env, check=True, timeout=30)

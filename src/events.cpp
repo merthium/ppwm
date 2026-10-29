@@ -88,6 +88,8 @@ void WindowManager::handle_client_message(const XClientMessageEvent &message) {
         client->hidden = false;
         set_client_state(*client, NormalState);
         view_tags(client->tags);
+        // view_tags is a no-op when already there; activation must still map a hidden client.
+        arrange();
         focus(client->window);
     } else if (message.message_type == atom("_NET_CLOSE_WINDOW")) {
         close_window(*client);

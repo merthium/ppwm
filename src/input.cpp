@@ -16,6 +16,19 @@ void WindowManager::spawn(const char *command) {
         _exit(127);
     }
 }
+void WindowManager::grab_buttons(const Client &client, bool focused) {
+    XUngrabButton(display_, AnyButton, AnyModifier, client.window);
+    // Pause an unfocused client's click until focus is updated, then replay it to the app.
+    if (!focused)
+        XGrabButton(display_, AnyButton, AnyModifier, client.window, False, ButtonPressMask,
+                    GrabModeSync, GrabModeAsync, None, None);
+    for (unsigned lock :
+         {0u, static_cast<unsigned>(LockMask), numlock_mask_, numlock_mask_ | LockMask})
+        for (unsigned button : {Button1, Button2, Button3})
+            XGrabButton(display_, button, config::modifier | lock, client.window, False,
+                        ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync,
+                        GrabModeAsync, None, None);
+}
 void WindowManager::grab_keys() {
     numlock_mask_ = 0;
     if (auto *map = XGetModifierMapping(display_)) {
@@ -276,6 +289,7 @@ void WindowManager::handle_button_press(const XButtonEvent &event) {
     if (!client)
         return;
     focus(client->window);
+    XAllowEvents(display_, ReplayPointer, event.time);
     if (!(event.state & config::modifier) || client->fullscreen ||
         focused_window_ != client->window)
         return;
@@ -291,7 +305,9 @@ void WindowManager::handle_button_press(const XButtonEvent &event) {
         arrange();
     }
     if (XGrabPointer(display_, root_window_, False, PointerMotionMask | ButtonReleaseMask,
-                     GrabModeAsync, GrabModeAsync, None, None, event.time) != GrabSuccess)
+                     GrabModeAsync, GrabModeAsync, None,
+                     event.button == Button3 ? resize_cursor_ : move_cursor_,
+                     event.time) != GrabSuccess)
         return;
     drag_ = {client->window, event.x_root, event.y_root, client->geometry, event.button == Button3};
 }

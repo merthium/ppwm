@@ -58,3 +58,22 @@ Nested integration and second-WM rejection passed.
 ```
 
 Ayrıca process, workspace ve layout birim testlerinin üçü geçti. Test kaydı hız karşılaştırması değildir; başka bir WM ile aynı iş yükünde karşılaştırma henüz yapılmadı.
+
+## Odak ve bar düzeltmeleri sonrası (2026-10-29)
+
+Bu koşuda Xephyr, eşlenmemiş bir üst pencere içinde çalıştırıldı. Ana masaüstünün fiziksel fare olayları otomatik odak testlerine karışmaz; bu koşu görünür masaüstünün çizim/compositor performansını ölçmez. Önceki görünür Xephyr koşusuyla doğrudan hız kıyası yapılmamalıdır.
+
+```text
+Root/bar cursor integration passed
+X11 integration passed
+Terminal swallowing integration passed
+Bar tabs, multitag and per-tag integration passed
+Tray integration passed
+64 windows: map 82.1007 ms; 10000 configure requests + tag barrier: 315.681 ms; restore/destroy 8.927 ms
+Stress WM CPU seconds: 0.050
+Idle CPU seconds / 3 wall seconds: 0.000; VmRSS: 15480 kB
+Restart executes replacement binary.
+Nested integration and second-WM rejection passed.
+```
+
+Ek regresyonlar: 12 ardışık etiket gidiş/dönüşünde son odağın korunması, aynı etikette gizli pencerenin etkinleştirilmesi, sabit imleç altındaki pencereye tıklayarak odaklanma ve tıklamanın uygulamaya iletilmesi, kök/bar imlecinin XFixes görüntüsüyle doğrulanması. Üç birim testi de geçti.

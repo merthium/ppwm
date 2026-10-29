@@ -15,6 +15,10 @@ Bar::Bar(Display *display, int screen, int width) : display_(display), screen_nu
     XftColorAllocName(display_, visual, colormap, config::foreground, &foreground_);
     XftColorAllocName(display_, visual, colormap, config::background, &background_);
     XftColorAllocName(display_, visual, colormap, config::accent, &selection_);
+    XftColorAllocName(display_, visual, colormap, config::bar_muted, &muted_);
+    XftColorAllocName(display_, visual, colormap, config::bar_bright, &bright_);
+    XftColorAllocName(display_, visual, colormap, config::bar_title_background, &title_background_);
+    XftColorAllocName(display_, visual, colormap, config::bar_divider, &divider_);
     XSetWindowAttributes attributes{};
     attributes.override_redirect = True;
     attributes.background_pixel = background_.pixel;
@@ -41,6 +45,10 @@ Bar::~Bar() {
     XftColorFree(display_, v, c, &foreground_);
     XftColorFree(display_, v, c, &background_);
     XftColorFree(display_, v, c, &selection_);
+    XftColorFree(display_, v, c, &muted_);
+    XftColorFree(display_, v, c, &bright_);
+    XftColorFree(display_, v, c, &title_background_);
+    XftColorFree(display_, v, c, &divider_);
 }
 void Bar::resize(int width) {
     width_ = std::max(1, width);
@@ -54,16 +62,20 @@ void Bar::resize(int width) {
     text_draw_ = XftDrawCreate(display_, buffer_, DefaultVisual(display_, screen_number_),
                                DefaultColormap(display_, screen_number_));
 }
-void Bar::draw_text(int x, int width, const std::string &value, bool active) {
+void Bar::draw_text(int x, int width, const std::string &value, TextStyle style) {
     if (width <= 0)
         return;
     XRectangle clip{static_cast<short>(x), 0, static_cast<unsigned short>(std::min(width, 65535)),
                     config::bar_height};
     XftDrawSetClipRectangles(text_draw_, 0, 0, &clip, 1);
-    if (active)
-        XftDrawRect(text_draw_, &selection_, x, 0, static_cast<unsigned>(width),
-                    config::bar_height);
-    XftDrawStringUtf8(text_draw_, &foreground_, font_, x + 7,
+    const auto *background = style == TextStyle::Selected ? &selection_
+                             : style == TextStyle::Title  ? &title_background_
+                                                          : &background_;
+    const auto *foreground = style == TextStyle::Selected ? &bright_
+                             : style == TextStyle::Hidden ? &muted_
+                                                          : &foreground_;
+    XftDrawRect(text_draw_, background, x, 0, static_cast<unsigned>(width), config::bar_height);
+    XftDrawStringUtf8(text_draw_, foreground, font_, x + 7,
                       (config::bar_height - font_->height) / 2 + font_->ascent,
                       reinterpret_cast<const FcChar8 *>(value.data()),
                       static_cast<int>(value.size()));
@@ -81,7 +93,9 @@ void Bar::render(const BarState &state, int reserved_width) {
     for (unsigned i = 0; i < 9; ++i) {
         int x = static_cast<int>(i) * config::tag_width;
         draw_text(x, config::tag_width, std::to_string(i + 1),
-                  (state.active_tags & (1u << i)) != 0);
+                  (state.active_tags & (1u << i)) ? TextStyle::Selected
+                  : (state.occupied & (1u << i))  ? TextStyle::Normal
+                                                  : TextStyle::Hidden);
         if (state.occupied & (1u << i))
             XftDrawRect(text_draw_, &foreground_, x + 7, config::bar_height - 3, 12, 2);
     }
@@ -110,13 +124,23 @@ void Bar::render(const BarState &state, int reserved_width) {
         const int start = left + title_width * i / count;
         const int end = left + title_width * (i + 1) / count;
         draw_text(start, end - start, client.hidden ? "[" + client.title + "]" : client.title,
-                  client.selected);
+                  client.selected ? TextStyle::Selected
+                  : client.hidden ? TextStyle::Hidden
+                                  : TextStyle::Title);
+        if (end > start) {
+            XftDrawRect(text_draw_, &divider_, end - 1, 5, 1, config::bar_height - 10);
+            if (client.selected)
+                XftDrawRect(text_draw_, &bright_, start + 1, config::bar_height - 2,
+                            static_cast<unsigned>(std::max(0, end - start - 2)), 2);
+        }
         regions_.push_back({start, end, {client.window, -1}});
     }
     int position = content_width - status_width;
     for (std::size_t i = 0; i < parts.size(); ++i) {
         const int width = std::min(widths[i], content_width - position);
         draw_text(position, width, parts[i]);
+        if (width > 0)
+            XftDrawRect(text_draw_, &divider_, position, 6, 1, config::bar_height - 12);
         regions_.push_back({position, position + width, {None, static_cast<int>(i)}});
         position += width;
     }
