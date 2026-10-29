@@ -36,13 +36,13 @@
 +    check(columns_result[1]==Rect{338,32,323,760} && columns_result[2]==Rect{669,32,323,760});
      std::cout << "layout invariants passed\n";
  }
---- a/src/keys.hpp
-+++ b/src/keys.hpp
-@@ -37,6 +37,7 @@
- };
- inline constexpr unsigned alt = modifier, shift = modifier | ShiftMask;
+--- a/src/config.hpp
++++ b/src/config.hpp
+@@ -48,6 +48,7 @@
+     Rule{"Emacs", nullptr, false, 2, false}, Rule{"popup", nullptr, true, 0, false},
+     Rule{"Blueman-manager", nullptr, true, 0, false}, Rule{"URxvt", "scratchpad", true, 0, true}};
  inline constexpr Binding keys[]{
-+    {alt | ControlMask, XK_c, Action::Layout, 3},
-     {alt, XK_a, Action::Spawn, 0, terminal},
-     {alt, XK_p, Action::Spawn, 0, launcher},
-     {alt, XK_s, Action::Spawn, 0, "\"$HOME/.local/bin/browser\""},
++    {MOD | ControlMask, XK_c, Action::Layout, 3},
+     {MOD, XK_1, Action::ViewTag, 1},
+     {MOD | ControlMask, XK_1, Action::ToggleViewTag, 1},
+     {MOD | ShiftMask, XK_1, Action::SendTag, 1},

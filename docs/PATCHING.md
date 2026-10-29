@@ -1,6 +1,6 @@
 # Kaynak patch iş akışı
 
-ppwm kaynak üzerinden genişletilir. Yeni yerleşimler `layouts`, yeni bar sağlayıcıları `modules`, yeni kısayollar `keys` tablosuna eklenir. Kararlı bir ikili eklenti ABI'si yoktur.
+ppwm kaynak üzerinden genişletilir. Yeni yerleşimler `layouts`, yeni bar sağlayıcıları `config.hpp` içindeki `status_modules`, yeni kısayollar aynı dosyadaki `keys` tablosuna eklenir. Kararlı bir ikili eklenti ABI'si yoktur.
 
 Örnek eşit kolon patch'i:
 

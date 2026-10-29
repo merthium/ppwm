@@ -18,6 +18,12 @@ struct WorkspaceSettings {
     bool bar_visible{true};
 };
 
+struct WorkspaceSnapshot {
+    TagMask active{1}, previous{1};
+    unsigned primary{}, previous_primary{};
+    std::array<WorkspaceSettings, 10> settings{};
+};
+
 // The tenth slot stores the all-tags view; normal tags retain their own settings.
 class Workspace {
   public:
@@ -37,6 +43,29 @@ class Workspace {
         return settings_[primary_];
     }
 
+    WorkspaceSnapshot snapshot() const {
+        return {active_, previous_, primary_, previous_primary_, settings_};
+    }
+    bool restore(const WorkspaceSnapshot &saved, std::size_t layout_count) {
+        auto valid_view = [](TagMask mask, unsigned primary) {
+            return mask && !(mask & ~all_tags) && primary < 10 &&
+                   (primary == 9 ? mask == all_tags : (mask & (1u << primary)) != 0);
+        };
+        if (!valid_view(saved.active, saved.primary) ||
+            !valid_view(saved.previous, saved.previous_primary))
+            return false;
+        for (const auto &settings : saved.settings)
+            if (!(settings.master_ratio >= 0.1 && settings.master_ratio <= 0.9) ||
+                settings.master_count < 0 || settings.layout_index >= layout_count ||
+                settings.previous_layout >= layout_count)
+                return false;
+        active_ = saved.active;
+        previous_ = saved.previous;
+        primary_ = saved.primary;
+        previous_primary_ = saved.previous_primary;
+        settings_ = saved.settings;
+        return true;
+    }
     bool view(TagMask tags) {
         tags &= all_tags;
         if (tags == active_)

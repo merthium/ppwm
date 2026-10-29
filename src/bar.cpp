@@ -52,6 +52,7 @@ Bar::~Bar() {
 }
 void Bar::resize(int width) {
     width_ = std::max(1, width);
+    painted_ = false;
     if (text_draw_)
         XftDrawDestroy(text_draw_);
     if (buffer_)
@@ -61,6 +62,9 @@ void Bar::resize(int width) {
                             static_cast<unsigned>(DefaultDepth(display_, screen_number_)));
     text_draw_ = XftDrawCreate(display_, buffer_, DefaultVisual(display_, screen_number_),
                                DefaultColormap(display_, screen_number_));
+    XftDrawRect(text_draw_, &background_, 0, 0, static_cast<unsigned>(width_), config::bar_height);
+    // The X server can repaint exposed/remapped areas from the most recent frame.
+    XSetWindowBackgroundPixmap(display_, window_, buffer_);
 }
 void Bar::draw_text(int x, int width, const std::string &value, TextStyle style) {
     if (width <= 0)
@@ -75,7 +79,7 @@ void Bar::draw_text(int x, int width, const std::string &value, TextStyle style)
                              : style == TextStyle::Hidden ? &muted_
                                                           : &foreground_;
     XftDrawRect(text_draw_, background, x, 0, static_cast<unsigned>(width), config::bar_height);
-    XftDrawStringUtf8(text_draw_, foreground, font_, x + 7,
+    XftDrawStringUtf8(text_draw_, foreground, font_, x + config::text_padding,
                       (config::bar_height - font_->height) / 2 + font_->ascent,
                       reinterpret_cast<const FcChar8 *>(value.data()),
                       static_cast<int>(value.size()));
@@ -88,11 +92,34 @@ BarHit Bar::hit_test(int x) const {
     return {};
 }
 void Bar::render(const BarState &state, int reserved_width) {
+    const auto now = std::chrono::steady_clock::now();
+    const bool refresh_status = now >= next_status_;
+    if (refresh_status) {
+        status_parts_.resize(config::status_modules.size());
+        status_widths_.resize(config::status_modules.size());
+        for (std::size_t i = 0; i < status_parts_.size(); ++i) {
+            status_parts_[i] = config::status_modules[i].read(state);
+            XGlyphInfo extent{};
+            XftTextExtentsUtf8(display_, font_,
+                               reinterpret_cast<const FcChar8 *>(status_parts_[i].data()),
+                               static_cast<int>(status_parts_[i].size()), &extent);
+            status_widths_[i] = status_parts_[i].empty()
+                                    ? 0
+                                    : static_cast<int>(extent.xOff) + 2 * config::text_padding + 2;
+        }
+        next_status_ = now + config::status_interval;
+    }
+    // The UI is sampled by a timer; unchanged ticks make no X11 drawing calls.
+    if (painted_ && !refresh_status && reserved_width == last_reserved_ && state == last_state_)
+        return;
+    last_state_ = state;
+    last_reserved_ = reserved_width;
+    painted_ = true;
     const int content_width = std::max(0, width_ - reserved_width);
     XftDrawRect(text_draw_, &background_, 0, 0, static_cast<unsigned>(width_), config::bar_height);
     for (unsigned i = 0; i < 9; ++i) {
         int x = static_cast<int>(i) * config::tag_width;
-        draw_text(x, config::tag_width, std::to_string(i + 1),
+        draw_text(x, config::tag_width, std::string(config::tag_labels[i]),
                   (state.active_tags & (1u << i)) ? TextStyle::Selected
                   : (state.occupied & (1u << i))  ? TextStyle::Normal
                                                   : TextStyle::Hidden);
@@ -100,22 +127,14 @@ void Bar::render(const BarState &state, int reserved_width) {
             XftDrawRect(text_draw_, &foreground_, x + 7, config::bar_height - 3, 12, 2);
     }
     int left = 9 * config::tag_width;
-    draw_text(left, 50, state.floating ? "[F]" : state.layout);
-    left += 50;
+    draw_text(left, config::layout_width, state.floating ? "[F]" : state.layout);
+    left += config::layout_width;
     regions_.clear();
-    std::array<std::string, bar_modules::modules.size()> parts;
-    std::array<int, bar_modules::modules.size()> widths{};
+    const auto &parts = status_parts_;
+    const auto &widths = status_widths_;
     int status_width = 0;
-    for (std::size_t i = 0; i < parts.size(); ++i) {
-        parts[i] = bar_modules::modules[i].read(state);
-        if (parts[i].empty())
-            continue;
-        XGlyphInfo extent{};
-        XftTextExtentsUtf8(display_, font_, reinterpret_cast<const FcChar8 *>(parts[i].data()),
-                           static_cast<int>(parts[i].size()), &extent);
-        widths[i] = static_cast<int>(extent.xOff) + 16;
-        status_width += widths[i];
-    }
+    for (int width : widths)
+        status_width += width;
     status_width = std::min(std::max(0, content_width - left), status_width);
     const int title_width = std::max(0, content_width - left - status_width);
     const int count = static_cast<int>(state.clients.size());

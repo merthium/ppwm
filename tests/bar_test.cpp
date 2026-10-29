@@ -114,8 +114,15 @@ void run(Display *display) {
                              ppwm::config::accent, &selected_color, &exact),
             "selection color");
     const auto selected_pixel = selected_color.pixel;
-    wait_until([&] { return pixel(display, bar, left + 5) == selected_pixel; },
-               "selected first tab painted");
+    XColor title_color{};
+    require(XAllocNamedColor(display, DefaultColormap(display, DefaultScreen(display)),
+                             ppwm::config::bar_title_background, &title_color, &exact),
+            "normal title color");
+    const int title_middle = left + (attributes(display, bar).width - left) / 2;
+    // Wait for both clients, not a previous one-client frame with the same selected color.
+    wait_until([&] { return pixel(display, bar, left + 5) == selected_pixel &&
+                           pixel(display, bar, title_middle) == title_color.pixel; },
+               "both title tabs painted");
     int boundary = left + 6;
     while (boundary < attributes(display, bar).width &&
            pixel(display, bar, boundary) == selected_pixel)
@@ -124,11 +131,23 @@ void run(Display *display) {
             "find title tab boundary");
     const int selected_tab = left + 10;
     const int other_tab = boundary + 10;
-    // Erase one selected pixel without Expose: only a later timer redraw restores it.
-    XClearArea(display, bar, left + 5, 0, 1, 1, False);
+    // Damage one selected pixel without Expose: only a later timer redraw restores it.
+    GC damage = XCreateGC(display, bar, 0, nullptr);
+    XSetForeground(display, damage, BlackPixel(display, DefaultScreen(display)));
+    XDrawPoint(display, bar, damage, left + 5, 0);
+    XFreeGC(display, damage);
     XSync(display, False);
     wait_until([&] { return pixel(display, bar, left + 5) == selected_pixel; },
                "periodic bar render restores selected tab");
+    XUnmapWindow(display, bar);
+    XMapRaised(display, bar);
+    XSync(display, False);
+    const auto repaint_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(250);
+    while (pixel(display, bar, left + 5) != selected_pixel) {
+        require(std::chrono::steady_clock::now() < repaint_deadline,
+                "remapping unchanged bar restores cached pixels within 250ms");
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
     click(display, bar, selected_tab, Button1);
     wait_until(
         [&] {
@@ -150,6 +169,37 @@ void run(Display *display) {
                    attributes(display, second).map_state == IsViewable;
         },
         "other tab click focuses without hiding selected window");
+
+    require(std::system("xdotool key --clearmodifiers alt+h alt+shift+j") == 0,
+            "temporarily preview hidden first client");
+    wait_until(
+        [&] {
+            return property(display, root, "_NET_ACTIVE_WINDOW") == first &&
+                   attributes(display, first).map_state == IsViewable;
+        },
+        "first client is temporarily previewed");
+    click(display, bar, selected_tab, Button1); // The first tab is the newer second client.
+    wait_until(
+        [&] {
+            return property(display, root, "_NET_ACTIVE_WINDOW") == second &&
+                   attributes(display, first).map_state == IsUnmapped;
+        },
+        "clicking another tab closes a temporary preview");
+    send(display, first, "_NET_ACTIVE_WINDOW", 1);
+    wait_until([&] { return attributes(display, first).map_state == IsViewable; },
+               "restore first client after preview test");
+
+    // Tag selection must not remain stale for a whole status-provider period.
+    send(display, root, "_NET_CURRENT_DESKTOP", 2);
+    const auto ui_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(250);
+    while (pixel(display, bar, 2 * ppwm::config::tag_width + 5) != selected_pixel) {
+        require(std::chrono::steady_clock::now() < ui_deadline,
+                "tag indicator updates within 250ms independently of slow status polling");
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    send(display, root, "_NET_CURRENT_DESKTOP", 0);
+    wait_until([&] { return attributes(display, first).map_state == IsViewable; },
+               "restore first tag after UI latency test");
 
     send(display, first, "_NET_WM_DESKTOP", 1);
     wait_until([&] { return attributes(display, first).map_state == IsUnmapped; },

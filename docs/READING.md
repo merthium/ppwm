@@ -1,6 +1,6 @@
 # Kodu okumaya başlarken
 
-Önce `main.cpp`, ardından `WindowManager::run()` ile başla. `run()` iki işi koordine eder: X11 kuyruğundaki olayları işlemek ve barın periyodik çizim zamanını takip etmek. Arada `poll()` bekler. Bar zamanlayıcısı için `steady_clock` kullanılır; sistem saati değişse bile periyot bozulmaz. Ekranda gösterilen saat ayrıca okunur.
+Önce `main.cpp`, ardından `WindowManager::run()` ile başla. `run()` iki işi koordine eder: X11 kuyruğundaki olayları işlemek ve barın periyodik çizim zamanını takip etmek. Arada `poll()` bekler. Arayüz 50 ms periyotla karşılaştırılır; değişmediyse X çizimi yapılmaz. Durum sağlayıcıları 2 saniyede bir okunur. Bar zamanlayıcısı için `steady_clock` kullanılır; sistem saati değişse bile periyot bozulmaz. Ekranda gösterilen saat ayrıca okunur.
 
 Bir pencere açıldığında yol şu şekildedir:
 
@@ -28,6 +28,6 @@ Odak kodunda iki ayrıntı özellikle önemlidir. Gizlenen pencere de `UnmapNoti
 
 Tray, WM'nin içinde ayrı bir küçük pencere yöneticisi gibidir. İkon başka bir uygulamanın penceresidir; `SystemTray` onu kendi konteynerine alır ve XEmbed mesajlarıyla haberleşir. Save-set, ppwm beklenmedik biçimde kapanırsa ikonun uygulamayla birlikte yok olmasını önler.
 
-Bir değişiklik için önce en küçük ilgili dosyayı seç. Yeni yerleşim `layout.hpp`, yeni kısayol `keys.hpp`, yeni durum bilgisi `bar_modules.hpp` içindedir. Çekirdek yalnızca pencere davranışı değişiyorsa değişmelidir.
+Bir değişiklik için önce en küçük ilgili dosyayı seç. Yeni yerleşim `layout.hpp`, yeni kısayol `config.hpp`, yeni durum sağlayıcısının gövdesi `bar_modules.cpp` içindedir. Çekirdek yalnızca pencere davranışı değişiyorsa değişmelidir.
 
 Protokol ayrıntıları için [XEmbed](https://specifications.freedesktop.org/xembed/latest-single/) ve [System Tray](https://specifications.freedesktop.org/systemtray/latest-single/) standartları temel referanslardır. Kodun desteklemediği ayrıntılar README kapsam bölümünde belirtilir.

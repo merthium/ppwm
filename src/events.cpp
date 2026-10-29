@@ -82,12 +82,18 @@ void WindowManager::handle_client_message(const XClientMessageEvent &message) {
     if (!client)
         return;
 
-    if (message.message_type == atom("_NET_WM_DESKTOP") && valid_tag) {
-        assign_tag(*client, static_cast<unsigned>(argument));
+    if (message.message_type == atom("_NET_WM_DESKTOP")) {
+        if (static_cast<unsigned long>(argument) == 0xffffffffUL || argument == -1)
+            assign_tags(*client, all_tags);
+        else if (valid_tag)
+            assign_tag(*client, static_cast<unsigned>(argument));
     } else if (message.message_type == atom("_NET_ACTIVE_WINDOW")) {
+        if (preview_window_ == client->window)
+            preview_window_ = None;
         client->hidden = false;
         set_client_state(*client, NormalState);
-        view_tags(client->tags);
+        if (!(client->tags & workspace_.active_tags()))
+            view_tags(client->tags);
         // view_tags is a no-op when already there; activation must still map a hidden client.
         arrange();
         focus(client->window);
@@ -112,6 +118,8 @@ void WindowManager::handle_event(XEvent &event) {
     switch (event.type) {
     case MapRequest:
         if (auto *client = find_client(event.xmaprequest.window)) {
+            if (preview_window_ == client->window)
+                preview_window_ = None;
             client->hidden = false;
             set_client_state(*client, NormalState);
             arrange();
@@ -146,8 +154,9 @@ void WindowManager::handle_event(XEvent &event) {
         }
         break;
     case EnterNotify:
-        if (event.xcrossing.mode == NotifyNormal && event.xcrossing.detail != NotifyInferior &&
-            !drag_.window && find_client(event.xcrossing.window))
+        if (config::focus_follows_mouse && event.xcrossing.mode == NotifyNormal &&
+            event.xcrossing.detail != NotifyInferior && !drag_.window &&
+            find_client(event.xcrossing.window))
             focus(event.xcrossing.window);
         break;
     case KeyPress:

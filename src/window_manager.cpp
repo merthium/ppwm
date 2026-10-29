@@ -65,7 +65,12 @@ void WindowManager::set_client_state(Client &client, long value) {
     XChangeProperty(display_, client.window, atom("WM_STATE"), atom("WM_STATE"), 32,
                     PropModeReplace, reinterpret_cast<unsigned char *>(data), 2);
 }
-WindowManager::WindowManager() : workspace_({.master_ratio = config::master_ratio}) {
+WindowManager::WindowManager()
+    : workspace_({.master_ratio = config::master_ratio,
+                  .master_count = config::default_master_count,
+                  .layout_index = config::default_layout % layouts.size(),
+                  .previous_layout = config::default_previous_layout % layouts.size(),
+                  .bar_visible = config::default_bar_visible}) {
     screen_number_ = DefaultScreen(display_);
     root_window_ = RootWindow(display_, screen_number_);
     screen_width_ = DisplayWidth(display_, screen_number_);
@@ -107,24 +112,21 @@ WindowManager::WindowManager() : workspace_({.master_ratio = config::master_rati
                     static_cast<int>(supported.size()));
     set_cardinal(root_window_, "_NET_NUMBER_OF_DESKTOPS", 9);
     set_cardinal(root_window_, "_NET_CURRENT_DESKTOP", 0);
-    const char names[] = "1\0"
-                         "2\0"
-                         "3\0"
-                         "4\0"
-                         "5\0"
-                         "6\0"
-                         "7\0"
-                         "8\0"
-                         "9\0";
+    std::string names;
+    for (const auto label : config::tag_labels) {
+        names.append(label);
+        names.push_back('\0');
+    }
     XChangeProperty(display_, root_window_, atom("_NET_DESKTOP_NAMES"), atom("UTF8_STRING"), 8,
-                    PropModeReplace, reinterpret_cast<const unsigned char *>(names),
-                    sizeof(names) - 1);
+                    PropModeReplace, reinterpret_cast<const unsigned char *>(names.data()),
+                    static_cast<int>(names.size()));
     bar_ = std::make_unique<Bar>(display_, screen_number_, screen_width_);
     tray_ = std::make_unique<SystemTray>(display_, screen_number_, bar_->window(), screen_width_);
     grab_keys();
     std::signal(SIGTERM, stop);
     std::signal(SIGINT, stop);
     std::signal(SIGCHLD, SIG_IGN);
+    load_session();
     Window rr, parent, *children = nullptr;
     unsigned count = 0;
     if (XQueryTree(display_, root_window_, &rr, &parent, &children, &count)) {
@@ -137,12 +139,15 @@ WindowManager::WindowManager() : workspace_({.master_ratio = config::master_rati
         if (children)
             XFree(children);
     }
+    restore_session();
     update_client_list();
     arrange();
 }
 WindowManager::~WindowManager() {
     if (!display_)
         return;
+    if (restart_requested_)
+        save_session();
     XUngrabPointer(display_, CurrentTime);
     XUngrabKey(display_, AnyKey, AnyModifier, root_window_);
     for (auto &client : clients_) {
@@ -194,6 +199,7 @@ void WindowManager::run() {
         auto now = clock::now();
         if (now >= deadline) {
             BarState bar_state;
+            bar_state.clients.reserve(clients_.size());
             bar_state.active_tags = workspace_.active_tags();
             bar_state.layout = layouts[workspace_.settings().layout_index].symbol;
             for (const auto &client : clients_) {

@@ -32,7 +32,11 @@ class WindowManager {
     unsigned numlock_mask_{};
     std::uint64_t focus_serial_{};
     Workspace workspace_;
-    bool restart_requested_{};
+    bool restart_requested_{}, restoring_{};
+    std::vector<unsigned long> session_data_;
+    void save_session();
+    void load_session();
+    void restore_session();
     Window preview_window_{};
     unsigned long normal_border_{}, focused_border_{};
     std::vector<Client> clients_;

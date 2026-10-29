@@ -39,5 +39,16 @@ int main() {
     require(workspace.settings().master_count == 2);
     workspace.view(ppwm::all_tags);
     require(workspace.settings().master_count == 4);
+    auto saved = workspace.snapshot();
+    ppwm::Workspace restored;
+    require(restored.restore(saved, 3));
+    require(restored.active_tags() == ppwm::all_tags && restored.settings().master_count == 4);
+    restored.view(0);
+    require(restored.active_tags() == 1 && restored.settings().master_count == 2);
+    saved.active = 0;
+    require(!restored.restore(saved, 3));
+    saved = workspace.snapshot();
+    saved.settings[0].layout_index = 99;
+    require(!restored.restore(saved, 3));
     std::cout << "Workspace tests passed\n";
 }

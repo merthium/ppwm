@@ -102,6 +102,10 @@ void WindowManager::manage_window(Window window) {
     grab_buttons(client, false);
     clients_.insert(clients_.begin(), client);
     auto &added = clients_.front();
+    if (restoring_) {
+        added.fullscreen = full;
+        return;
+    }
     publish_client_tags(added);
     set_client_state(added, NormalState);
     if (full)
@@ -364,8 +368,9 @@ void WindowManager::cycle_focus(int step, bool include_hidden) {
     focus(target->window);
     preview_window_ = hidden ? target->window : None;
     arrange();
-    XWarpPointer(display_, None, target->window, 0, 0, 0, 0, target->geometry.width / 2,
-                 target->geometry.height / 2);
+    if (config::warp_pointer)
+        XWarpPointer(display_, None, target->window, 0, 0, 0, 0, target->geometry.width / 2,
+                     target->geometry.height / 2);
 }
 void WindowManager::view_tag(unsigned tag) {
     if (tag < 9)

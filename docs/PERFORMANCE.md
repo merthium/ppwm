@@ -28,7 +28,7 @@ CPU sayacı çözünürlüğü sınırlıdır; 0 tick, CPU'nun hiç kullanılmad
 ## Uygulanan seçimler
 
 - Boşta `poll()`; sürekli dönen kontrol döngüsü yok.
-- Bar zamanlaması `steady_clock` ile, varsayılan 2 saniye.
+- Bar zamanlaması `steady_clock` ile: arayüz karşılaştırması 50 ms, durum kaynağı okuması 2 saniye; değişmeyen arayüz turunda X çizim çağrısı yok.
 - X olayları sınırlı gruplar halinde işlenir; yoğunluk bar zamanlayıcısını sınırsız ertelemez.
 - Sıradaki ardışık fare hareketleri son konuma birleştirilir. ButtonRelease gibi farklı olayların üzerinden atlanmaz.
 - Geometri aynıysa yeniden `XMoveResizeWindow` gönderilmez. ConfigureRequest için gerekli protokol yanıtı yine verilir.
@@ -77,3 +77,29 @@ Nested integration and second-WM rejection passed.
 ```
 
 Ek regresyonlar: 12 ardışık etiket gidiş/dönüşünde son odağın korunması, aynı etikette gizli pencerenin etkinleştirilmesi, sabit imleç altındaki pencereye tıklayarak odaklanma ve tıklamanın uygulamaya iletilmesi, kök/bar imlecinin XFixes görüntüsüyle doğrulanması. Üç birim testi de geçti.
+
+## Merkezi yapılandırma ve etiket/oturum düzeltmeleri sonrası
+
+50 ms arayüz örneklemesi ve 2 s durum verisi periyodu ile aynı izole Xephyr düzeninde alınan son kayıt:
+
+```text
+Root/bar cursor integration passed
+X11 integration passed
+Terminal swallowing integration passed
+Bar tabs, multitag and per-tag integration passed
+PASS: combined view contains both tags
+PASS: activating a visible client preserves combined view
+PASS: EWMH supports all-tags assignment
+PASS: all-tags client remains visible on another tag
+PASS: hidden focus cycle previews the hidden client
+PASS: explicit activation makes a preview permanent
+Restart session preservation passed
+Tray integration passed
+64 windows: map 85.3537 ms; 10000 configure requests + tag barrier: 285.745 ms; restore/destroy 8.37729 ms
+Stress WM CPU seconds: 0.070
+Idle CPU seconds / 3 wall seconds: 0.000; VmRSS: 14680 kB
+Restart executes replacement binary.
+Nested integration and second-WM rejection passed.
+```
+
+Bar testleri etiket göstergesinin ve yeniden gösterilen barın 250 ms sınırı içinde doğru çizildiğini doğrular. Birim testleri: config, process, workspace, layout (4/4). Önceki ölçümlerdeki donanım/çözünürlük ve CPU sayacı sınırlamaları geçerlidir.

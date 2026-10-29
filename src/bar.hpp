@@ -1,6 +1,8 @@
 #pragma once
+#include "config_types.hpp"
 #include <X11/Xft/Xft.h>
 #include <X11/Xlib.h>
+#include <chrono>
 #include <string>
 #include <vector>
 namespace ppwm {
@@ -8,6 +10,7 @@ struct BarClient {
     Window window{};
     std::string title;
     bool selected{}, hidden{};
+    bool operator==(const BarClient &) const = default;
 };
 struct BarHit {
     Window client{};
@@ -18,10 +21,7 @@ struct BarState {
     std::string layout;
     std::vector<BarClient> clients;
     bool floating{};
-};
-struct BarModule {
-    std::string (*read)(const BarState &);
-    const char *on_click{};
+    bool operator==(const BarState &) const = default;
 };
 class Bar {
     Display *display_;
@@ -35,6 +35,12 @@ class Bar {
     XftColor muted_{}, bright_{}, title_background_{}, divider_{};
     enum class TextStyle { Normal, Selected, Title, Hidden };
     int width_{};
+    BarState last_state_;
+    bool painted_{};
+    int last_reserved_{};
+    std::chrono::steady_clock::time_point next_status_{};
+    std::vector<std::string> status_parts_;
+    std::vector<int> status_widths_;
     struct HitRegion {
         int left, right;
         BarHit hit;

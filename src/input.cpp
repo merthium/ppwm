@@ -1,4 +1,3 @@
-#include "bar_modules.hpp"
 #include "config.hpp"
 #include "keys.hpp"
 #include "window_manager.hpp"
@@ -24,10 +23,11 @@ void WindowManager::grab_buttons(const Client &client, bool focused) {
                     GrabModeSync, GrabModeAsync, None, None);
     for (unsigned lock :
          {0u, static_cast<unsigned>(LockMask), numlock_mask_, numlock_mask_ | LockMask})
-        for (unsigned button : {Button1, Button2, Button3})
-            XGrabButton(display_, button, config::modifier | lock, client.window, False,
-                        ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync,
-                        GrabModeAsync, None, None);
+        for (const auto &binding : config::mouse_bindings)
+            if (binding.context == config::MouseContext::Client)
+                XGrabButton(display_, binding.button, binding.modifiers | lock, client.window,
+                            False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+                            GrabModeAsync, GrabModeAsync, None, None);
 }
 void WindowManager::grab_keys() {
     numlock_mask_ = 0;
@@ -51,12 +51,6 @@ void WindowManager::grab_keys() {
     };
     for (const auto &binding : config::keys)
         grab(binding.key, binding.modifiers);
-    for (KeySym keysym = XK_1; keysym <= XK_9; ++keysym) {
-        for (unsigned extra :
-             {0u, static_cast<unsigned>(ShiftMask), static_cast<unsigned>(ControlMask),
-              static_cast<unsigned>(ControlMask | ShiftMask)})
-            grab(keysym, config::modifier | extra);
-    }
 }
 void WindowManager::promote_to_master() {
     auto *selected = find_client(focused_window_);
@@ -144,21 +138,28 @@ void WindowManager::handle_key_press(const XKeyEvent &event) {
     auto keysym = XLookupKeysym(const_cast<XKeyEvent *>(&event), 0);
     auto modifiers = event.state & ~(numlock_mask_ | LockMask);
     auto *client = find_client(focused_window_);
-    if (keysym >= XK_1 && keysym <= XK_9 && (modifiers & config::modifier) &&
-        !(modifiers & ~(config::modifier | ShiftMask | ControlMask))) {
-        const TagMask tags = 1u << static_cast<unsigned>(keysym - XK_1);
-        const bool toggle = modifiers & ControlMask;
-        if ((modifiers & ShiftMask) && client)
-            assign_tags(*client, tags, config::view_on_tag && !toggle, toggle);
-        else
-            view_tags(tags, toggle);
-        return;
-    }
     using config::Action;
     for (const auto &binding : config::keys) {
         if (binding.key != keysym || binding.modifiers != modifiers)
             continue;
         switch (binding.action) {
+        case Action::ViewTag:
+        case Action::ToggleViewTag:
+        case Action::SendTag:
+        case Action::ToggleSendTag: {
+            if (binding.argument < 1 || binding.argument > 9)
+                break;
+            const TagMask tags = 1u << static_cast<unsigned>(binding.argument - 1);
+            const bool toggle =
+                binding.action == Action::ToggleViewTag || binding.action == Action::ToggleSendTag;
+            if (binding.action == Action::SendTag || binding.action == Action::ToggleSendTag) {
+                if (client)
+                    assign_tags(*client, tags, config::view_on_tag && !toggle, toggle);
+            } else {
+                view_tags(tags, toggle);
+            }
+            break;
+        }
         case Action::Spawn:
             spawn(binding.command);
             break;
@@ -247,68 +248,108 @@ void WindowManager::handle_key_press(const XKeyEvent &event) {
     }
 }
 void WindowManager::handle_button_press(const XButtonEvent &event) {
+    using config::MouseAction;
+    using config::MouseContext;
+    MouseContext context = MouseContext::Client;
+    BarHit hit{};
+    TagMask tags{};
+    auto *client = find_client(event.window);
     if (event.window == bar_->window()) {
-        if (event.x < 9 * config::tag_width &&
-            (event.button == Button1 || event.button == Button3)) {
-            TagMask tags = 1u << static_cast<unsigned>(event.x / config::tag_width);
-            bool toggle = event.button == Button3;
-            if ((event.state & config::modifier) && find_client(focused_window_))
-                assign_tags(*find_client(focused_window_), tags, config::view_on_tag && !toggle,
-                            toggle);
-            else
-                view_tags(tags, toggle);
-        } else if (event.x < 9 * config::tag_width + 50) {
-            if (event.button == Button1)
-                toggle_layout();
-            else if (event.button == Button3)
-                select_layout(2);
+        const int tags_width = static_cast<int>(config::tag_labels.size()) * config::tag_width;
+        if (event.x >= 0 && event.x < tags_width) {
+            context = MouseContext::Tag;
+            tags = 1u << static_cast<unsigned>(event.x / config::tag_width);
+        } else if (event.x >= tags_width && event.x < tags_width + config::layout_width) {
+            context = MouseContext::Layout;
         } else {
-            const auto hit = bar_->hit_test(event.x);
-            if (auto *target = find_client(hit.client); target && on_current_tags(*target)) {
-                if (event.button == Button1 && target->window == focused_window_)
-                    hide(*target);
-                else if (event.button == Button1 || event.button == Button2) {
-                    preview_window_ = None;
-                    target->hidden = false;
-                    set_client_state(*target, NormalState);
-                    arrange();
-                    focus(target->window);
-                    if (event.button == Button2)
-                        promote_to_master();
-                }
-            } else if (hit.module >= 0) {
-                if (event.button == Button2)
-                    spawn(config::terminal);
-                else if (event.button == Button1 || event.button == Button3)
-                    spawn(bar_modules::modules[static_cast<std::size_t>(hit.module)].on_click);
+            hit = bar_->hit_test(event.x);
+            client = find_client(hit.client);
+            if (client && on_current_tags(*client))
+                context = MouseContext::Title;
+            else if (hit.module >= 0)
+                context = MouseContext::StatusArea;
+            else
+                return;
+        }
+    } else {
+        if (!client)
+            return;
+        focus(client->window);
+        XAllowEvents(display_, ReplayPointer, event.time);
+        if (client->fullscreen || focused_window_ != client->window)
+            return;
+    }
+    const unsigned modifiers = event.state & ~(numlock_mask_ | LockMask);
+    for (const auto &binding : config::mouse_bindings) {
+        if (binding.context != context || binding.button != event.button ||
+            binding.modifiers != modifiers)
+            continue;
+        switch (binding.action) {
+        case MouseAction::Spawn:
+            spawn(binding.command);
+            break;
+        case MouseAction::ModuleCommand:
+            if (hit.module >= 0 &&
+                static_cast<std::size_t>(hit.module) < config::status_modules.size())
+                spawn(config::status_modules[static_cast<std::size_t>(hit.module)].on_click);
+            break;
+        case MouseAction::ViewTag:
+        case MouseAction::ToggleViewTag:
+            if (tags)
+                view_tags(tags, binding.action == MouseAction::ToggleViewTag);
+            break;
+        case MouseAction::SendTag:
+        case MouseAction::ToggleSendTag:
+            if (auto *selected = find_client(focused_window_); selected && tags) {
+                const bool toggle = binding.action == MouseAction::ToggleSendTag;
+                assign_tags(*selected, tags, config::view_on_tag && !toggle, toggle);
             }
+            break;
+        case MouseAction::CycleLayout:
+            toggle_layout();
+            break;
+        case MouseAction::Layout:
+            select_layout(static_cast<std::size_t>(binding.argument));
+            break;
+        case MouseAction::ToggleHide:
+        case MouseAction::FocusZoom:
+            if (!client)
+                break;
+            if (binding.action == MouseAction::ToggleHide && client->window == focused_window_) {
+                hide(*client);
+            } else {
+                if (preview_window_ == client->window)
+                    preview_window_ = None;
+                client->hidden = false;
+                set_client_state(*client, NormalState);
+                arrange();
+                focus(client->window);
+                if (binding.action == MouseAction::FocusZoom)
+                    promote_to_master();
+            }
+            break;
+        case MouseAction::Float:
+            if (client)
+                toggle_floating(*client);
+            break;
+        case MouseAction::Move:
+        case MouseAction::Resize: {
+            if (!client || client->fullscreen)
+                break;
+            if (!client->floating) {
+                client->floating_geometry = client->geometry;
+                client->floating = true;
+                arrange();
+            }
+            const bool resize = binding.action == MouseAction::Resize;
+            if (XGrabPointer(display_, root_window_, False, PointerMotionMask | ButtonReleaseMask,
+                             GrabModeAsync, GrabModeAsync, None,
+                             resize ? resize_cursor_ : move_cursor_, event.time) == GrabSuccess)
+                drag_ = {client->window, event.x_root, event.y_root, client->geometry, resize};
+            break;
+        }
         }
         return;
     }
-    auto *client = find_client(event.window);
-    if (!client)
-        return;
-    focus(client->window);
-    XAllowEvents(display_, ReplayPointer, event.time);
-    if (!(event.state & config::modifier) || client->fullscreen ||
-        focused_window_ != client->window)
-        return;
-    if (event.button == Button2) {
-        toggle_floating(*client);
-        return;
-    }
-    if (event.button != Button1 && event.button != Button3)
-        return;
-    if (!client->floating) {
-        client->floating_geometry = client->geometry;
-        client->floating = true;
-        arrange();
-    }
-    if (XGrabPointer(display_, root_window_, False, PointerMotionMask | ButtonReleaseMask,
-                     GrabModeAsync, GrabModeAsync, None,
-                     event.button == Button3 ? resize_cursor_ : move_cursor_,
-                     event.time) != GrabSuccess)
-        return;
-    drag_ = {client->window, event.x_root, event.y_root, client->geometry, event.button == Button3};
 }
 } // namespace ppwm
