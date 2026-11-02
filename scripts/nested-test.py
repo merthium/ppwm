@@ -74,6 +74,8 @@ with tempfile.TemporaryDirectory(prefix='ppwm-test-') as folder:
             subprocess.run([str(build / 'bar_test')], env=env, check=True, timeout=30)
             subprocess.run([str(build / 'tag_test')], env=env, check=True, timeout=30)
             subprocess.run([str(build / 'session_test')], env=env, check=True, timeout=30)
+            subprocess.run([str(build / 'slstatus_test')], env=env, check=True, timeout=15)
+            subprocess.run([str(build / 'fullscreen_state_test')], env=env, check=True, timeout=10)
             # Linux /proc: measure idle user+system CPU time, not an estimated percentage.
             def ticks():
                 fields = Path(f'/proc/{wm.pid}/stat').read_text().split()

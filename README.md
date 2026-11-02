@@ -122,6 +122,19 @@ Terminal swallowing, XRes üzerinden doğrulanan süreç kimliği ve `/proc` iç
 
 Yeniden başlatma, mevcut ve önceki etiket görünümünü, etiket başına ayarları, pencere etiketlerini, gizli/floating/tam ekran durumunu, floating geometrisini, pencere sırasını ve odağı korur. Durum yalnızca yeniden başlatma sırasında geçici bir X property içinde taşınır; diske yazılmaz. Bu mekanizma oturum kapatma/açma için uygulamaları yeniden başlatmaz.
 
+## slstatus
+
+`config.hpp` içindeki `use_slstatus = true` ayarı kök pencerenin `WM_NAME` metnini durum alanında gösterir. Standart `slstatus` bu özelliği günceller; `slstatus -s` stdout'a yazar ve bu yol için kullanılmaz.
+
+```sh
+slstatus &
+exec ppwm
+```
+
+ppwm slstatus sürecini kendisi başlatmaz. Mevcut oturum başlangıcında zaten çalıştırılıyorsa ikinci kopya başlatma. Veri `status_interval` periyodunda okunur; root property olayları doğrudan çizim tetiklemez. Çıktı boşsa/silinmişse yerleşik `status_modules` kullanılır; `use_slstatus = false` dış kaynağı tamamen kapatır. Çöken slstatus'un bıraktığı son metin, property temizlenene kadar kalır.
+
+Düz UTF-8 metin ve status2d `^c#RRGGBB^`, `^b#RRGGBB^`, `^d^`, `^fN^`, `^rX,Y,W,H^` komutları desteklenir; tek blokta birden fazla çizim komutu kullanılabilir. Girdi 4096 baytla, renk önbelleği 64 renkle sınırlıdır. Harici metin shell komutu olarak çalıştırılmaz. Sol/sağ tık için `slstatus_click` komutu ayarlanabilir; orta tık varsayılan terminali açar. slstatus alanı tek tıklama bölgesidir; durum metnindeki blok sinyalleri yorumlanmaz.
+
 ## Sistem tepsisi
 
 Tepsi barın sağındadır. XEmbed ikonlarının eklenmesini, mapped bayrağını, yeniden boyutlandırılmasını, kaldırılmasını ve yönetici değişimini destekler. Bar gizlendiğinde tepsi de gizlenir. İkonlar WM kapanışında uygulamaları öldürmeden ayrılır.

@@ -434,9 +434,27 @@ void WindowManager::set_fullscreen(Client &client, bool enabled) {
                 set_fullscreen(other, false);
     }
     client.fullscreen = enabled;
-    Atom full = atom("_NET_WM_STATE_FULLSCREEN");
-    XChangeProperty(display_, client.window, atom("_NET_WM_STATE"), XA_ATOM, 32, PropModeReplace,
-                    reinterpret_cast<unsigned char *>(&full), enabled ? 1 : 0);
+    const Atom full = atom("_NET_WM_STATE_FULLSCREEN");
+    const Atom property = atom("_NET_WM_STATE");
+    Atom type{};
+    int format{};
+    unsigned long count{}, remaining{};
+    unsigned char *raw = nullptr;
+    std::vector<Atom> states;
+    if (XGetWindowProperty(display_, client.window, property, 0, 1024, False, XA_ATOM, &type,
+                           &format, &count, &remaining, &raw) == Success &&
+        raw && type == XA_ATOM && format == 32) {
+        const auto *values = reinterpret_cast<const Atom *>(raw);
+        states.assign(values, values + count);
+    }
+    if (raw)
+        XFree(raw);
+    std::erase(states, full);
+    if (enabled)
+        states.push_back(full);
+    XChangeProperty(display_, client.window, property, XA_ATOM, 32, PropModeReplace,
+                    reinterpret_cast<const unsigned char *>(states.data()),
+                    static_cast<int>(states.size()));
     XSetWindowBorderWidth(display_, client.window, enabled ? 0 : config::border);
     arrange();
     if (enabled && is_visible(client))

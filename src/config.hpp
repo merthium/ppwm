@@ -23,6 +23,8 @@ inline constexpr char clock_format[] = "%H:%M";
 inline constexpr bool topbar = false, view_on_tag = true;
 inline constexpr double master_ratio = 0.55, ratio_step = 0.03;
 inline constexpr auto bar_interval = std::chrono::milliseconds(50);
+inline constexpr bool use_slstatus = true;
+inline constexpr const char *slstatus_click = nullptr;
 inline constexpr auto status_interval = std::chrono::milliseconds(2000);
 inline constexpr char font[] =
     "Lilex Nerd Font Mono:style=Regular:pixelsize=14:antialias=true:hinting=true";

@@ -66,6 +66,8 @@ def main():
                 env = dict(os.environ, DISPLAY=display, PPWM_DEMO_DISPLAY=display)
                 wm = subprocess.Popen([str(ROOT / "build/ppwm")], env=env, stdout=log, stderr=log)
                 processes.append(wm)
+                if status_binary := shutil.which("slstatus"):
+                    processes.append(subprocess.Popen([status_binary], env=env, stdout=log, stderr=log))
                 time.sleep(0.5)
                 if wm.poll() is not None:
                     raise RuntimeError("ppwm exited before demo launch")

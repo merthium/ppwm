@@ -1,9 +1,11 @@
 #pragma once
 #include "config_types.hpp"
+#include "status_text.hpp"
 #include <X11/Xft/Xft.h>
 #include <X11/Xlib.h>
 #include <chrono>
 #include <string>
+#include <unordered_map>
 #include <vector>
 namespace ppwm {
 struct BarClient {
@@ -15,6 +17,7 @@ struct BarClient {
 struct BarHit {
     Window client{};
     int module{-1};
+    bool external{};
 };
 struct BarState {
     unsigned active_tags{1}, occupied{};
@@ -34,6 +37,13 @@ class Bar {
     XftColor foreground_{}, background_{}, selection_{};
     XftColor muted_{}, bright_{}, title_background_{}, divider_{};
     enum class TextStyle { Normal, Selected, Title, Hidden };
+    bool external_status_{};
+    std::vector<StatusPart> external_parts_;
+    int external_width_{};
+    std::unordered_map<std::string, XftColor> status_colors_;
+    void read_external_status();
+    void draw_external_status(int x, int width);
+    int text_width(const std::string &) const;
     int width_{};
     BarState last_state_;
     bool painted_{};

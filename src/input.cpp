@@ -266,7 +266,7 @@ void WindowManager::handle_button_press(const XButtonEvent &event) {
             client = find_client(hit.client);
             if (client && on_current_tags(*client))
                 context = MouseContext::Title;
-            else if (hit.module >= 0)
+            else if (hit.external || hit.module >= 0)
                 context = MouseContext::StatusArea;
             else
                 return;
@@ -289,6 +289,10 @@ void WindowManager::handle_button_press(const XButtonEvent &event) {
             spawn(binding.command);
             break;
         case MouseAction::ModuleCommand:
+            if (hit.external) {
+                spawn(config::slstatus_click);
+                break;
+            }
             if (hit.module >= 0 &&
                 static_cast<std::size_t>(hit.module) < config::status_modules.size())
                 spawn(config::status_modules[static_cast<std::size_t>(hit.module)].on_click);

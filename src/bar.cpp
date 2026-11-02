@@ -1,6 +1,7 @@
 #include "bar.hpp"
 #include "bar_modules.hpp"
 #include "config.hpp"
+#include <X11/Xatom.h>
 #include <algorithm>
 #include <array>
 #include <ctime>
@@ -49,6 +50,8 @@ Bar::~Bar() {
     XftColorFree(display_, v, c, &bright_);
     XftColorFree(display_, v, c, &title_background_);
     XftColorFree(display_, v, c, &divider_);
+    for (auto &[name, color] : status_colors_)
+        XftColorFree(display_, v, c, &color);
 }
 void Bar::resize(int width) {
     width_ = std::max(1, width);
@@ -95,9 +98,10 @@ void Bar::render(const BarState &state, int reserved_width) {
     const auto now = std::chrono::steady_clock::now();
     const bool refresh_status = now >= next_status_;
     if (refresh_status) {
+        read_external_status();
         status_parts_.resize(config::status_modules.size());
         status_widths_.resize(config::status_modules.size());
-        for (std::size_t i = 0; i < status_parts_.size(); ++i) {
+        for (std::size_t i = 0; !external_status_ && i < status_parts_.size(); ++i) {
             status_parts_[i] = config::status_modules[i].read(state);
             XGlyphInfo extent{};
             XftTextExtentsUtf8(display_, font_,
@@ -135,6 +139,8 @@ void Bar::render(const BarState &state, int reserved_width) {
     int status_width = 0;
     for (int width : widths)
         status_width += width;
+    if (external_status_)
+        status_width = external_width_;
     status_width = std::min(std::max(0, content_width - left), status_width);
     const int title_width = std::max(0, content_width - left - status_width);
     const int count = static_cast<int>(state.clients.size());
@@ -155,7 +161,11 @@ void Bar::render(const BarState &state, int reserved_width) {
         regions_.push_back({start, end, {client.window, -1}});
     }
     int position = content_width - status_width;
-    for (std::size_t i = 0; i < parts.size(); ++i) {
+    if (external_status_) {
+        draw_external_status(position, status_width);
+        regions_.push_back({position, content_width, {None, -1, true}});
+    }
+    for (std::size_t i = 0; !external_status_ && i < parts.size(); ++i) {
         const int width = std::min(widths[i], content_width - position);
         draw_text(position, width, parts[i]);
         if (width > 0)

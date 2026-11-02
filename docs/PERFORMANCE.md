@@ -103,3 +103,18 @@ Nested integration and second-WM rejection passed.
 ```
 
 Bar testleri etiket göstergesinin ve yeniden gösterilen barın 250 ms sınırı içinde doğru çizildiğini doğrular. Birim testleri: config, process, workspace, layout (4/4). Önceki ölçümlerdeki donanım/çözünürlük ve CPU sayacı sınırlamaları geçerlidir.
+
+## slstatus entegrasyonu sonrası (2026-11-02)
+
+Beş birim testi ve tam Xephyr paketi geçti. Ek testler: root WM_NAME üzerinden düz metin, status2d renk/dikdörtgen çizimi, boş root durumunda yerleşik modüllere dönüş ve tam ekran geçişlerinde diğer EWMH durumlarının korunması.
+
+```text
+slstatus root-name, status2d and fallback passed
+64 windows: map 308.931 ms; 10000 configure requests + tag barrier: 1273.15 ms; restore/destroy 32.163 ms
+Stress WM CPU seconds: 0.260
+Idle CPU seconds / 3 wall seconds: 0.010; VmRSS: 14476 kB
+Restart executes replacement binary.
+Nested integration and second-WM rejection passed.
+```
+
+Bu tek koşu önceki ölçümlere karşı hız iddiası taşımaz; masaüstü yükü değişebilir. Ekran görüntüsü kurulu slstatus ile ayrı bir gerçek Xephyr oturumunda yenilendi.
