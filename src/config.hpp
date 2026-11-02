@@ -28,7 +28,7 @@ inline constexpr std::size_t default_layout = 0, default_previous_layout = 1;
 inline constexpr bool default_bar_visible = true, focus_follows_mouse = true, warp_pointer = true;
 inline constexpr std::array<std::string_view, 9> tag_labels{"1", "2", "3", "4", "5",
                                                             "6", "7", "8", "9"};
-inline constexpr std::string_view empty_tag_label = "·"; // Empty string keeps tag names.
+inline constexpr std::string_view empty_tag_label = ""; // Empty string keeps tag names.
 inline constexpr char clock_format[] = "%H:%M";
 inline constexpr bool topbar = false, view_on_tag = true;
 inline constexpr double master_ratio = 0.55, ratio_step = 0.03;

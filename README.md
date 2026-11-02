@@ -102,7 +102,7 @@ Tüm kullanıcı ayarlarının giriş noktası `src/config.hpp` dosyasıdır:
 - `minimum_float_size`, imleçler ve `event_batch_limit`: sürükleme ve olay işleme ayarları.
 - `default_master_count`, `default_layout`, `default_previous_layout`, `master_ratio`, `gap`, `border`, `smart_borders`: başlangıç yerleşimi ve kenarlık davranışı.
 - `focus_follows_mouse`, `warp_pointer`, `view_on_tag`: odak, imleç ve pencere taşıma davranışı.
-- `empty_tag_label`: boş etiketlerin göstergesi; varsayılan `·`, boş metin verilirse etiket isimleri gösterilir.
+- `empty_tag_label`: boş etiketlerin göstergesi; varsayılan boş metindir; tüm etiketlerde normal etiket isimleri gösterilir. İstenirse `·` gibi bir gösterge atanabilir.
 - `font`, `fallback_font`, renkler, `topbar`, `default_bar_visible`, bar/tepsi boyutları `text_padding` ve `tag_padding`: görünüm.
 - `bar_interval`, `status_interval`, `status_modules`, `clock_format`: zamanlama, modül sırası ve tıklama komutları.
 
@@ -116,7 +116,7 @@ inline constexpr unsigned MOD = Mod1Mask; // Alt; Super için Mod4Mask
 
 Örnekleri eklerken aynı tuşun mevcut kaydını değiştir; `config` testi çakışan kısayolları bildirir. Etiket hedefleri 1–9 aralığındadır. Ayarlar derleme zamanındadır; değişiklikten sonra yeniden derle, kur ve ppwm'yi yeniden başlat. `ppwm.hpp` ortak tipleri ve bildirimleri, `ppwm.cpp` uygulamayı içerir; kullanıcı ayarları `config.hpp` içindedir.
 
-Varsayılan terminal `urxvtc +j || urxvt +j`, başlatıcı `dmenu_run`'dır. Bazı uygulama tuşları `$HOME/.local/bin` altındaki yardımcı komutları çağırır; bu komutlar depoya dahil değildir. Kendi uygulamalarınla değiştirebilirsin. Ana font Fragment Mono 14 punto ve `embolden=true`; eksik glifler için Lilex Nerd Font Mono 13 punto kullanılır. Fontconfig kurulu olmayan fontlar için alternatif seçer. Metinler kendi alanlarında ortalanır. Seçili etiket/pencere daha açık zeminle, gizli pencereler ve boş etiketler daha sönük renkle ayrılır. Boş etiketler küçük noktalarla gösterilir. Başlıklar arasında dikey ayraç ve alt çizgi kullanılmaz; uzun başlıklar UTF-8 sınırları korunarak üç noktayla kısaltılır.
+Varsayılan terminal `urxvtc +j || urxvt +j`, başlatıcı `dmenu_run`'dır. Bazı uygulama tuşları `$HOME/.local/bin` altındaki yardımcı komutları çağırır; bu komutlar depoya dahil değildir. Kendi uygulamalarınla değiştirebilirsin. Ana font Fragment Mono 14 punto ve `embolden=true`; eksik glifler için Lilex Nerd Font Mono 13 punto kullanılır. Fontconfig kurulu olmayan fontlar için alternatif seçer. Metinler kendi alanlarında ortalanır. Seçili etiket/pencere daha açık zeminle, gizli pencereler ve boş etiketler daha sönük renkle ayrılır. Boş etiketlerde de normal rakamlar gösterilir. Başlıklar arasında dikey ayraç ve alt çizgi kullanılmaz; uzun başlıklar UTF-8 sınırları korunarak üç noktayla kısaltılır.
 
 `smart_borders = true` iken görünür tek pencere tiled veya floating olsa da kenarlıksızdır. Gizli pencereler, başka etiketlerdeki pencereler ve swallowing ile yerini uygulamaya bırakan terminaller sayılmaz. İkinci görünür pencere geldiğinde kenarlıklar geri gelir; tam ekran her zaman kenarlıksızdır. `false` ile sabit `border` kalınlığına dönülür.
 
