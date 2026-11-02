@@ -1,5 +1,6 @@
 #pragma once
 #include <X11/Xlib.h>
+#include <chrono>
 #include <vector>
 
 namespace ppwm {
@@ -16,6 +17,7 @@ class SystemTray {
     }
     bool handle_event(const XEvent &event);
     void resize(int bar_width);
+    void refresh();
 
   private:
     struct Icon {
@@ -25,7 +27,8 @@ class SystemTray {
     Display *display_;
     Window root_, bar_, window_{};
     Atom selection_, opcode_, xembed_, xembed_info_;
-    int bar_width_, width_{};
+    int screen_, bar_width_, width_{};
+    std::chrono::steady_clock::time_point next_attempt_{};
     std::vector<Icon> icons_;
 
     Icon *find_icon(Window window);

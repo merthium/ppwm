@@ -112,8 +112,19 @@ int main() {
     wait_until([&] { return parent_of(first) == root; }, "selection loss detaches live icon");
     require(XGetSelectionOwner(display, selection) == replacement,
             "old tray does not clear new owner");
-    XDestroyWindow(display, first);
     XDestroyWindow(display, replacement);
+    XFlush(display);
+    wait_until(
+        [&] {
+            owner = XGetSelectionOwner(display, selection);
+            return owner != None && owner != replacement;
+        },
+        "tray recovers when replacement manager exits");
+    dock(first);
+    wait_until(
+        [&] { return parent_of(first) == owner && attributes(first).map_state == IsViewable; },
+        "live icon docks again after ownership recovery");
+    XDestroyWindow(display, first);
     XCloseDisplay(display);
     std::cout << "Tray integration passed\n";
 }

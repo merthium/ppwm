@@ -198,6 +198,7 @@ void WindowManager::run() {
         }
         auto now = clock::now();
         if (now >= deadline) {
+            tray_->refresh();
             BarState bar_state;
             bar_state.clients.reserve(clients_.size());
             bar_state.active_tags = workspace_.active_tags();

@@ -118,3 +118,16 @@ Nested integration and second-WM rejection passed.
 ```
 
 Bu tek koşu önceki ölçümlere karşı hız iddiası taşımaz; masaüstü yükü değişebilir. Ekran görüntüsü kurulu slstatus ile ayrı bir gerçek Xephyr oturumunda yenilendi.
+
+## Tray geri kazanımı ve ortalanmış bar
+
+Beş birim testi ve tam Xephyr paketi geçti. Tray testi, başka yöneticinin kapanması ardından ppwm'nin seçimi yeniden alıp canlı ikonu tekrar kabul ettiğini doğrular. Ekran görüntüsünde gerçek XEmbed demo ikonu, ortalanmış başlıklar ve alt çizgisiz renk seçimi bulunur.
+
+```text
+Tray integration passed
+64 windows: map 291.25 ms; 10000 configure requests + tag barrier: 1181.32 ms; restore/destroy 26.7768 ms
+Stress WM CPU seconds: 0.220
+Idle CPU seconds / 3 wall seconds: 0.010; VmRSS: 14416 kB
+Restart executes replacement binary.
+Nested integration and second-WM rejection passed.
+```

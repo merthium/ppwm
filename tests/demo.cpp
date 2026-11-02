@@ -79,12 +79,41 @@ int main(int argc, char **argv) {
             XSelectInput(display, panel.window, ExposureMask | StructureNotifyMask);
             XMapWindow(display, panel.window);
         }
+        // A real XEmbed fixture makes the tray visible in the demo capture.
+        Window tray_icon = None;
+        const auto tray_name = "_NET_SYSTEM_TRAY_S" + std::to_string(screen);
+        const Window tray = XGetSelectionOwner(display, XInternAtom(display, tray_name.c_str(), False));
+        if (tray != None) {
+            tray_icon = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 20, 20, 0, 0, 0);
+            XStoreName(display, tray_icon, "ppwm demo tray icon");
+            XSelectInput(display, tray_icon, ExposureMask);
+            const Atom info = XInternAtom(display, "_XEMBED_INFO", False);
+            const long flags[]{0, 1};
+            XChangeProperty(display, tray_icon, info, info, 32, PropModeReplace,
+                            reinterpret_cast<const unsigned char *>(flags), 2);
+            XEvent dock{};
+            dock.xclient.type = ClientMessage;
+            dock.xclient.window = tray;
+            dock.xclient.message_type = XInternAtom(display, "_NET_SYSTEM_TRAY_OPCODE", False);
+            dock.xclient.format = 32;
+            dock.xclient.data.l[2] = static_cast<long>(tray_icon);
+            XSendEvent(display, tray, False, NoEventMask, &dock);
+        }
         XFlush(display);
         while (true) {
             XEvent event{};
             XNextEvent(display, &event);
             if (event.type != Expose && event.type != ConfigureNotify)
                 continue;
+            if (event.xany.window == tray_icon) {
+                XClearWindow(display, tray_icon);
+                XSetForeground(display, gc, foreground);
+                for (int bar = 0; bar < 3; ++bar)
+                    XFillRectangle(display, tray_icon, gc, 3 + 5 * bar, 12 - 4 * bar, 3,
+                                   static_cast<unsigned>(5 + 4 * bar));
+                XFlush(display);
+                continue;
+            }
             for (const auto &panel : panels) {
                 if (event.xany.window != panel.window)
                     continue;

@@ -82,10 +82,30 @@ void Bar::draw_text(int x, int width, const std::string &value, TextStyle style)
                              : style == TextStyle::Hidden ? &muted_
                                                           : &foreground_;
     XftDrawRect(text_draw_, background, x, 0, static_cast<unsigned>(width), config::bar_height);
-    XftDrawStringUtf8(text_draw_, foreground, font_, x + config::text_padding,
+    std::string label = value;
+    const int available = std::max(0, width - 2 * config::text_padding);
+    int label_width = text_width(label);
+    if (label_width > available) {
+        const std::string ellipsis = "…";
+        const int suffix_width = text_width(ellipsis);
+        if (suffix_width > available)
+            label.clear();
+        else {
+            while (!label.empty() && text_width(label) + suffix_width > available) {
+                auto last = label.size() - 1;
+                while (last > 0 && (static_cast<unsigned char>(label[last]) & 0xc0) == 0x80)
+                    --last;
+                label.resize(last);
+            }
+            label += ellipsis;
+        }
+        label_width = text_width(label);
+    }
+    const int padding = config::center_bar_text ? (width - label_width) / 2 : config::text_padding;
+    XftDrawStringUtf8(text_draw_, foreground, font_, x + padding,
                       (config::bar_height - font_->height) / 2 + font_->ascent,
-                      reinterpret_cast<const FcChar8 *>(value.data()),
-                      static_cast<int>(value.size()));
+                      reinterpret_cast<const FcChar8 *>(label.data()),
+                      static_cast<int>(label.size()));
     XftDrawSetClip(text_draw_, nullptr);
 }
 BarHit Bar::hit_test(int x) const {
@@ -127,8 +147,6 @@ void Bar::render(const BarState &state, int reserved_width) {
                   (state.active_tags & (1u << i)) ? TextStyle::Selected
                   : (state.occupied & (1u << i))  ? TextStyle::Normal
                                                   : TextStyle::Hidden);
-        if (state.occupied & (1u << i))
-            XftDrawRect(text_draw_, &foreground_, x + 7, config::bar_height - 3, 12, 2);
     }
     int left = 9 * config::tag_width;
     draw_text(left, config::layout_width, state.floating ? "[F]" : state.layout);
@@ -154,9 +172,6 @@ void Bar::render(const BarState &state, int reserved_width) {
                                   : TextStyle::Title);
         if (end > start) {
             XftDrawRect(text_draw_, &divider_, end - 1, 5, 1, config::bar_height - 10);
-            if (client.selected)
-                XftDrawRect(text_draw_, &bright_, start + 1, config::bar_height - 2,
-                            static_cast<unsigned>(std::max(0, end - start - 2)), 2);
         }
         regions_.push_back({start, end, {client.window, -1}});
     }

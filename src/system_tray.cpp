@@ -13,22 +13,31 @@ constexpr long mapped_flag = 1;
 } // namespace
 
 SystemTray::SystemTray(Display *display, int screen, Window bar, int bar_width)
-    : display_(display), root_(RootWindow(display, screen)), bar_(bar), bar_width_(bar_width) {
+    : display_(display), root_(RootWindow(display, screen)), bar_(bar), screen_(screen),
+      bar_width_(bar_width) {
     const auto name = "_NET_SYSTEM_TRAY_S" + std::to_string(screen);
     selection_ = XInternAtom(display_, name.c_str(), False);
     opcode_ = XInternAtom(display_, "_NET_SYSTEM_TRAY_OPCODE", False);
     xembed_ = XInternAtom(display_, "_XEMBED", False);
     xembed_info_ = XInternAtom(display_, "_XEMBED_INFO", False);
+    refresh();
+}
+
+void SystemTray::refresh() {
+    const auto now = std::chrono::steady_clock::now();
+    if (!config::tray_enabled || window_ || now < next_attempt_)
+        return;
+    next_attempt_ = now + config::tray_retry_interval;
     if (XGetSelectionOwner(display_, selection_) != None)
         return;
 
-    window_ = XCreateSimpleWindow(display_, bar, 0, 0, 1, config::bar_height, 0, 0, 0);
+    window_ = XCreateSimpleWindow(display_, bar_, 0, 0, 1, config::bar_height, 0, 0, 0);
     XStoreName(display_, window_, "ppwm-tray");
     XSelectInput(display_, window_, SubstructureRedirectMask | SubstructureNotifyMask);
     const auto orientation = XInternAtom(display_, "_NET_SYSTEM_TRAY_ORIENTATION", False);
     const auto visual_property = XInternAtom(display_, "_NET_SYSTEM_TRAY_VISUAL", False);
     unsigned long horizontal = 0;
-    VisualID visual = XVisualIDFromVisual(DefaultVisual(display_, screen));
+    VisualID visual = XVisualIDFromVisual(DefaultVisual(display_, screen_));
     XChangeProperty(display_, window_, orientation, XA_CARDINAL, 32, PropModeReplace,
                     reinterpret_cast<unsigned char *>(&horizontal), 1);
     XChangeProperty(display_, window_, visual_property, XA_VISUALID, 32, PropModeReplace,

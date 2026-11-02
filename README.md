@@ -4,7 +4,7 @@ Minimal, patchlenebilir bir C++20 X11 pencere yöneticisi.
 
 ![Xephyr içinde ppwm](assets/ppwm.png)
 
-Gerçek Xephyr oturumundan alınmıştır; görüntüdeki istemciler demo programına aittir.
+Gerçek Xephyr oturumundan alınmıştır; görüntüdeki istemciler ve sağdaki XEmbed tray ikonu demo programına aittir.
 
 - Otomatik master/stack döşeme, floating ve monocle yerleşimleri.
 - Birlikte görüntülenebilen dokuz etiket; etiket başına yerleşim, oran, master sayısı ve bar ayarı.
@@ -112,7 +112,7 @@ inline constexpr unsigned MOD = Mod1Mask; // Alt; Super için Mod4Mask
 
 Örnekleri eklerken aynı tuşun mevcut kaydını değiştir; `config` testi çakışan kısayolları bildirir. Etiket hedefleri 1–9 aralığındadır. Ayarlar derleme zamanındadır; değişiklikten sonra yeniden derle, kur ve ppwm'yi yeniden başlat. `keys.hpp` yalnızca eylem/veri tiplerini tanımlar; kullanıcı kısayolları orada değildir.
 
-Varsayılan terminal `urxvtc +j || urxvt +j`, başlatıcı `dmenu_run`'dır. Bazı uygulama tuşları `$HOME/.local/bin` altındaki yardımcı komutları çağırır; bu komutlar depoya dahil değildir. Kendi uygulamalarınla değiştirebilirsin. Fontconfig, Lilex Nerd Font Mono bulunamazsa bir yedek font seçer. Yapay kalınlık uygulanmaz; seçili pencere alt çizgiyle, gizli pencereler ve boş etiketler daha sönük renkle ayrılır.
+Varsayılan terminal `urxvtc +j || urxvt +j`, başlatıcı `dmenu_run`'dır. Bazı uygulama tuşları `$HOME/.local/bin` altındaki yardımcı komutları çağırır; bu komutlar depoya dahil değildir. Kendi uygulamalarınla değiştirebilirsin. Fontconfig, Lilex Nerd Font Mono bulunamazsa bir yedek font seçer. Yapay kalınlık uygulanmaz; metinler kendi alanlarında ortalanır. Seçili etiket/pencere açık zemin ve parlak yazıyla, gizli pencereler ve boş etiketler daha sönük renkle ayrılır. Alt çizgi kullanılmaz; uzun başlıklar UTF-8 sınırları korunarak üç noktayla kısaltılır.
 
 Pil kaynağı `/sys/class/power_supply/BAT0/capacity` olarak ayarlıdır. Keep-awake modülü `$HOME/.cache/keep-awake/running.lock` dosyasının kilit durumunu okur. Modüller shell komutu başlatmaz.
 
@@ -137,7 +137,7 @@ Düz UTF-8 metin ve status2d `^c#RRGGBB^`, `^b#RRGGBB^`, `^d^`, `^fN^`, `^rX,Y,W
 
 ## Sistem tepsisi
 
-Tepsi barın sağındadır. XEmbed ikonlarının eklenmesini, mapped bayrağını, yeniden boyutlandırılmasını, kaldırılmasını ve yönetici değişimini destekler. Bar gizlendiğinde tepsi de gizlenir. İkonlar WM kapanışında uygulamaları öldürmeden ayrılır.
+Tepsi barın sağındadır. `config.hpp` içindeki `tray_enabled`, `tray_icon_size` ve `tray_spacing` ile açılıp boyutlandırılır. Başka bir tray yöneticisi varsa onu devralmaz; yönetici kapanınca `tray_retry_interval` içinde yeniden sahiplik alıp uygulamalara duyurur. XEmbed ikonlarının eklenmesini, mapped bayrağını, yeniden boyutlandırılmasını, kaldırılmasını ve yönetici değişimini destekler. Bar gizlendiğinde tepsi de gizlenir. İkonlar WM kapanışında uygulamaları öldürmeden ayrılır.
 
 D-Bus StatusNotifierItem kullanan uygulamalar için `snixembed` gibi bir XEmbed köprüsü gerekir; ppwm kendisi bir SNI host başlatmaz. Tray balloon mesajları ve klavyeyle ikonlar arası gezinme henüz uygulanmamıştır.
 

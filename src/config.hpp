@@ -12,6 +12,9 @@ inline constexpr std::array<std::string_view, 5> terminal_classes{"urxvt", "xter
                                                                   "alacritty", "kitty"};
 inline constexpr bool swallow_automatic = true;
 inline constexpr int bar_height = 24, border = 2, gap = 0, tag_width = 32, snap = 20;
+inline constexpr bool tray_enabled = true;
+inline constexpr auto tray_retry_interval = std::chrono::milliseconds(2000);
+inline constexpr bool center_bar_text = true;
 inline constexpr int tray_icon_size = 20, tray_spacing = 2;
 inline constexpr int layout_width = 50, text_padding = 7;
 inline constexpr int default_master_count = 1;
@@ -28,8 +31,8 @@ inline constexpr const char *slstatus_click = nullptr;
 inline constexpr auto status_interval = std::chrono::milliseconds(2000);
 inline constexpr char font[] =
     "Lilex Nerd Font Mono:style=Regular:pixelsize=14:antialias=true:hinting=true";
-inline constexpr char background[] = "#000000", foreground[] = "#a0a0a0", accent[] = "#202020";
-inline constexpr char bar_muted[] = "#686868", bar_bright[] = "#e0e0e0";
+inline constexpr char background[] = "#000000", foreground[] = "#a0a0a0", accent[] = "#303030";
+inline constexpr char bar_muted[] = "#686868", bar_bright[] = "#eeeeee";
 inline constexpr char bar_title_background[] = "#101010", bar_divider[] = "#353535";
 inline constexpr char normal_border[] = "#202020", selected_border[] = "#808080";
 inline constexpr char terminal[] = "urxvtc +j || urxvt +j";
