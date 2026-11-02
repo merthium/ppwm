@@ -33,7 +33,7 @@ void WindowManager::handle_configure_request(const XConfigureRequestEvent &reque
     if (request.value_mask & CWHeight)
         geometry.height = request.height;
     const auto previous = client->geometry;
-    set_geometry(*client, constrain_floating(geometry, workarea(), config::border));
+    set_geometry(*client, constrain_floating(geometry, workarea(), client->border_width));
     if (previous == client->geometry)
         send_configure_notify(*client);
 }
@@ -53,8 +53,8 @@ void WindowManager::handle_motion(const XMotionEvent &motion) {
         geometry.x += dx;
         geometry.y += dy;
         const auto area = workarea();
-        const int right = area.x + area.width - geometry.width - 2 * config::border;
-        const int bottom = area.y + area.height - geometry.height - 2 * config::border;
+        const int right = area.x + area.width - geometry.width - 2 * client->border_width;
+        const int bottom = area.y + area.height - geometry.height - 2 * client->border_width;
         if (std::abs(geometry.x - area.x) < config::snap)
             geometry.x = area.x;
         if (std::abs(geometry.y - area.y) < config::snap)

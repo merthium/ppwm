@@ -97,7 +97,8 @@ void WindowManager::manage_window(Window window) {
         XFree(data);
     }
     XSelectInput(display_, window, PropertyChangeMask | EnterWindowMask);
-    XSetWindowBorderWidth(display_, window, config::border);
+    client.border_width = config::border;
+    XSetWindowBorderWidth(display_, window, static_cast<unsigned>(client.border_width));
     XSetWindowBorder(display_, window, normal_border_);
     grab_buttons(client, false);
     clients_.insert(clients_.begin(), client);
@@ -184,7 +185,7 @@ void WindowManager::send_configure_notify(Client &client) {
     event.xconfigure.y = client.geometry.y;
     event.xconfigure.width = client.geometry.width;
     event.xconfigure.height = client.geometry.height;
-    event.xconfigure.border_width = client.fullscreen ? 0 : config::border;
+    event.xconfigure.border_width = client.border_width;
     XSendEvent(display_, client.window, False, StructureNotifyMask, &event);
 }
 void WindowManager::set_geometry(Client &client, Rect geometry) {
@@ -202,6 +203,10 @@ void WindowManager::arrange() {
     const auto area = workarea();
     XMoveWindow(display_, bar_->window(), 0,
                 config::topbar ? 0 : std::max(0, screen_height_ - config::bar_height));
+    const bool single = config::smart_borders && std::count_if(clients_.begin(), clients_.end(),
+                                                               [this](const Client &client) {
+                                                                   return is_visible(client);
+                                                               }) == 1;
     std::vector<Client *> tiled;
     tiled.reserve(clients_.size());
     for (auto &client : clients_) {
@@ -213,6 +218,12 @@ void WindowManager::arrange() {
             }
             continue;
         }
+        const int border = client.fullscreen || single ? 0 : config::border;
+        if (client.border_width != border) {
+            client.border_width = border;
+            XSetWindowBorderWidth(display_, client.window, static_cast<unsigned>(border));
+            send_configure_notify(client);
+        }
         if (!client.mapped) {
             XMapWindow(display_, client.window);
             client.mapped = true;
@@ -223,7 +234,7 @@ void WindowManager::arrange() {
         }
         if (client.floating || !layouts[workspace_.settings().layout_index].arrange) {
             set_geometry(client,
-                         constrain_floating(client.floating_geometry, area, config::border));
+                         constrain_floating(client.floating_geometry, area, client.border_width));
         } else
             tiled.push_back(&client);
     }
@@ -233,8 +244,8 @@ void WindowManager::arrange() {
             workspace_.settings().master_count);
         for (std::size_t i = 0; i < tiled.size(); ++i) {
             auto geometry = rects[i];
-            geometry.width -= 2 * config::border;
-            geometry.height -= 2 * config::border;
+            geometry.width -= 2 * tiled[i]->border_width;
+            geometry.height -= 2 * tiled[i]->border_width;
             set_geometry(*tiled[i], geometry);
         }
     }
@@ -455,7 +466,6 @@ void WindowManager::set_fullscreen(Client &client, bool enabled) {
     XChangeProperty(display_, client.window, property, XA_ATOM, 32, PropModeReplace,
                     reinterpret_cast<const unsigned char *>(states.data()),
                     static_cast<int>(states.size()));
-    XSetWindowBorderWidth(display_, client.window, enabled ? 0 : config::border);
     arrange();
     if (enabled && is_visible(client))
         focus(client.window);

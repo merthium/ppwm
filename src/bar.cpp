@@ -143,7 +143,10 @@ void Bar::render(const BarState &state, int reserved_width) {
     XftDrawRect(text_draw_, &background_, 0, 0, static_cast<unsigned>(width_), config::bar_height);
     for (unsigned i = 0; i < 9; ++i) {
         int x = static_cast<int>(i) * config::tag_width;
-        draw_text(x, config::tag_width, std::string(config::tag_labels[i]),
+        const bool empty = !((state.active_tags | state.occupied) & (1u << i));
+        const auto label = empty && !config::empty_tag_label.empty() ? config::empty_tag_label
+                                                                     : config::tag_labels[i];
+        draw_text(x, config::tag_width, std::string(label),
                   (state.active_tags & (1u << i)) ? TextStyle::Selected
                   : (state.occupied & (1u << i))  ? TextStyle::Normal
                                                   : TextStyle::Hidden);
@@ -170,9 +173,6 @@ void Bar::render(const BarState &state, int reserved_width) {
                   client.selected ? TextStyle::Selected
                   : client.hidden ? TextStyle::Hidden
                                   : TextStyle::Title);
-        if (end > start) {
-            XftDrawRect(text_draw_, &divider_, end - 1, 5, 1, config::bar_height - 10);
-        }
         regions_.push_back({start, end, {client.window, -1}});
     }
     int position = content_width - status_width;

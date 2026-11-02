@@ -12,6 +12,7 @@ inline constexpr std::array<std::string_view, 5> terminal_classes{"urxvt", "xter
                                                                   "alacritty", "kitty"};
 inline constexpr bool swallow_automatic = true;
 inline constexpr int bar_height = 24, border = 2, gap = 0, tag_width = 32, snap = 20;
+inline constexpr bool smart_borders = true;
 inline constexpr bool tray_enabled = true;
 inline constexpr auto tray_retry_interval = std::chrono::milliseconds(2000);
 inline constexpr bool center_bar_text = true;
@@ -22,6 +23,7 @@ inline constexpr std::size_t default_layout = 0, default_previous_layout = 1;
 inline constexpr bool default_bar_visible = true, focus_follows_mouse = true, warp_pointer = true;
 inline constexpr std::array<std::string_view, 9> tag_labels{"1", "2", "3", "4", "5",
                                                             "6", "7", "8", "9"};
+inline constexpr std::string_view empty_tag_label = "·"; // Empty string keeps tag names.
 inline constexpr char clock_format[] = "%H:%M";
 inline constexpr bool topbar = false, view_on_tag = true;
 inline constexpr double master_ratio = 0.55, ratio_step = 0.03;
@@ -31,10 +33,10 @@ inline constexpr const char *slstatus_click = nullptr;
 inline constexpr auto status_interval = std::chrono::milliseconds(2000);
 inline constexpr char font[] =
     "Lilex Nerd Font Mono:style=Regular:pixelsize=14:antialias=true:hinting=true";
-inline constexpr char background[] = "#000000", foreground[] = "#a0a0a0", accent[] = "#303030";
-inline constexpr char bar_muted[] = "#686868", bar_bright[] = "#eeeeee";
-inline constexpr char bar_title_background[] = "#101010", bar_divider[] = "#353535";
-inline constexpr char normal_border[] = "#202020", selected_border[] = "#808080";
+inline constexpr char background[] = "#000000", foreground[] = "#adb4b8", accent[] = "#232c30";
+inline constexpr char bar_muted[] = "#626d73", bar_bright[] = "#e4ecef";
+inline constexpr char bar_title_background[] = "#0b0e10", bar_divider[] = "#252d31";
+inline constexpr char normal_border[] = "#202629", selected_border[] = "#78888f";
 inline constexpr char terminal[] = "urxvtc +j || urxvt +j";
 inline constexpr char launcher[] =
     "dmenu_run -m 0 -nb '#000000' -nf '#a0a0a0' -sb '#202020' -sf '#a0a0a0' -p '>>>'";

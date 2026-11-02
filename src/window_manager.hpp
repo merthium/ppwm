@@ -19,7 +19,7 @@ struct Client {
     bool terminal{};
     Window swallowed_by{}, terminal_window{};
     bool floating{}, fullscreen{}, mapped{}, input{true}, hidden{}, scratchpad{};
-    int ignore_unmap{}, original_border{};
+    int ignore_unmap{}, original_border{}, border_width{};
     Rect geometry{}, floating_geometry{};
 };
 class WindowManager {

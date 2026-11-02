@@ -134,7 +134,6 @@ void WindowManager::restore_session() {
         focus_serial_ = std::max(focus_serial_, client->focus_order);
         client->terminal_window = data[offset + 14];
         client->swallowed_by = data[offset + 15];
-        XSetWindowBorderWidth(display_, client->window, client->fullscreen ? 0 : config::border);
     }
     // Relationships survive only if both clients are still present and agree.
     for (auto &client : clients_) {
@@ -144,7 +143,6 @@ void WindowManager::restore_session() {
         if (auto *terminal = find_client(client.terminal_window);
             !terminal || terminal->swallowed_by != client.window)
             client.terminal_window = None;
-        XSetWindowBorderWidth(display_, client.window, client.fullscreen ? 0 : config::border);
         publish_client_tags(client);
         set_client_state(client, client.hidden ? IconicState : NormalState);
     }

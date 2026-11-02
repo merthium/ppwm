@@ -131,3 +131,18 @@ Idle CPU seconds / 3 wall seconds: 0.010; VmRSS: 14416 kB
 Restart executes replacement binary.
 Nested integration and second-WM rejection passed.
 ```
+
+## Smartborder ve sadeleştirilmiş bar (2026-11-02)
+
+Beş birim testi ve tam Xephyr paketi geçti. Smartborder regresyonu tek/iki pencere, etiket taşıma, gizleme/gösterme, pencere kapatma, tam ekran dönüşü ve floating kenar geometrisini gerçek X pencere geometrisi üzerinden doğrular. Barın boş etiketleri nokta, başlıkları ayraçsız ve seçim rengi soğuk gri olarak güncellendi; zamanlayıcı periyotları aynı.
+
+```text
+Smartborder transitions passed
+64 windows: map 73.8414 ms; 10000 configure requests + tag barrier: 295.641 ms; restore/destroy 8.15064 ms
+Stress WM CPU seconds: 0.050
+Idle CPU seconds / 3 wall seconds: 0.010; VmRSS: 14524 kB
+Restart executes replacement binary.
+Nested integration and second-WM rejection passed.
+```
+
+Bu tek koşu önceki kayıtlarla hız karşılaştırması değildir. Kenarlık kalınlığı istemcide tutulur; yalnızca değiştiğinde X sunucusuna yeni kalınlık gönderilir. Görünür pencere sayısı yerleşim sırasında hesaplanır; barın periyodik döngüsüne yeni pencere sorgusu eklenmez.

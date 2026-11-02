@@ -69,6 +69,7 @@ with tempfile.TemporaryDirectory(prefix='ppwm-test-') as folder:
                 raise RuntimeError('Second WM ownership guard failed')
             if (build / 'cursor_test').exists():
                 subprocess.run([str(build / 'cursor_test')], env=env, check=True, timeout=5)
+            subprocess.run([str(build / 'smart_border_test')], env=env, check=True, timeout=15)
             subprocess.run([str(build / 'x11_test')], env=env, check=True, timeout=30)
             subprocess.run([str(build / 'swallow_test')], env=env, check=True, timeout=30)
             subprocess.run([str(build / 'bar_test')], env=env, check=True, timeout=30)

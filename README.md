@@ -11,7 +11,8 @@ Gerçek Xephyr oturumundan alınmıştır; görüntüdeki istemciler ve sağdaki
 - Pencere gizleme, geçici önizleme, scratchpad ve terminal swallowing.
 - Alt ile fareden taşıma/boyutlandırma ve kenarlara yaslama.
 - Entegre alt bar: pil, saat, keep-awake durumu ve XEmbed sistem tepsisi.
-- Siyah/gri palet, 14 px Lilex Nerd Font Mono, 2 px kenarlık, sıfır boşluk.
+- Siyah ve soğuk gri palet, ortalanmış 14 px Lilex Nerd Font Mono, sıfır boşluk.
+- Smartborder: görünür tek pencerede kenarlık yok; iki veya daha fazla pencerede 2 px.
 - Kaynak dosyalarından değiştirilebilen ayarlar, kısayollar, yerleşimler ve bar modülleri.
 
 Bar, X olaylarından bağımsız **50 ms zamanlayıcıyla** arayüz durumunu kontrol eder; değişmeyen turda çizim yapmaz. Pil/saat gibi durum sağlayıcıları ayrı **2 saniyelik** periyotta okunur. Etiket göstergesi bu yavaş veri periyodunu beklemez. Pencere ve tepsi protokolleri X11 olaylarını işler. İş yokken ana döngü `poll()` içinde bekler.
@@ -97,8 +98,9 @@ Tüm kullanıcı ayarlarının giriş noktası `src/config.hpp` dosyasıdır:
 - `MOD`: varsayılan `Mod1Mask` (Alt); Super için `Mod4Mask`.
 - `keys`, `mouse_bindings`: etiketler dahil tuşlar, fare eylemleri ve uygulama komutları.
 - `tag_labels`, `rules`, `terminal_classes`, `swallow_automatic`: etiket isimleri ve pencere kuralları.
-- `default_master_count`, `default_layout`, `default_previous_layout`, `master_ratio`, `gap`, `border`: başlangıç yerleşimi.
+- `default_master_count`, `default_layout`, `default_previous_layout`, `master_ratio`, `gap`, `border`, `smart_borders`: başlangıç yerleşimi ve kenarlık davranışı.
 - `focus_follows_mouse`, `warp_pointer`, `view_on_tag`: odak, imleç ve pencere taşıma davranışı.
+- `empty_tag_label`: boş etiketlerin göstergesi; varsayılan `·`, boş metin verilirse etiket isimleri gösterilir.
 - `font`, renkler, `topbar`, `default_bar_visible`, bar/tepsi boyutları ve `text_padding`: görünüm.
 - `bar_interval`, `status_interval`, `status_modules`, `clock_format`: zamanlama, modül sırası ve tıklama komutları.
 
@@ -112,7 +114,9 @@ inline constexpr unsigned MOD = Mod1Mask; // Alt; Super için Mod4Mask
 
 Örnekleri eklerken aynı tuşun mevcut kaydını değiştir; `config` testi çakışan kısayolları bildirir. Etiket hedefleri 1–9 aralığındadır. Ayarlar derleme zamanındadır; değişiklikten sonra yeniden derle, kur ve ppwm'yi yeniden başlat. `keys.hpp` yalnızca eylem/veri tiplerini tanımlar; kullanıcı kısayolları orada değildir.
 
-Varsayılan terminal `urxvtc +j || urxvt +j`, başlatıcı `dmenu_run`'dır. Bazı uygulama tuşları `$HOME/.local/bin` altındaki yardımcı komutları çağırır; bu komutlar depoya dahil değildir. Kendi uygulamalarınla değiştirebilirsin. Fontconfig, Lilex Nerd Font Mono bulunamazsa bir yedek font seçer. Yapay kalınlık uygulanmaz; metinler kendi alanlarında ortalanır. Seçili etiket/pencere açık zemin ve parlak yazıyla, gizli pencereler ve boş etiketler daha sönük renkle ayrılır. Alt çizgi kullanılmaz; uzun başlıklar UTF-8 sınırları korunarak üç noktayla kısaltılır.
+Varsayılan terminal `urxvtc +j || urxvt +j`, başlatıcı `dmenu_run`'dır. Bazı uygulama tuşları `$HOME/.local/bin` altındaki yardımcı komutları çağırır; bu komutlar depoya dahil değildir. Kendi uygulamalarınla değiştirebilirsin. Fontconfig, Lilex Nerd Font Mono bulunamazsa bir yedek font seçer. Yapay kalınlık uygulanmaz; metinler kendi alanlarında ortalanır. Seçili etiket/pencere açık zemin ve parlak yazıyla, gizli pencereler ve boş etiketler daha sönük renkle ayrılır. Boş etiketler küçük noktalarla gösterilir. Başlıklar arasında dikey ayraç ve alt çizgi kullanılmaz; uzun başlıklar UTF-8 sınırları korunarak üç noktayla kısaltılır.
+
+`smart_borders = true` iken görünür tek pencere tiled veya floating olsa da kenarlıksızdır. Gizli pencereler, başka etiketlerdeki pencereler ve swallowing ile yerini uygulamaya bırakan terminaller sayılmaz. İkinci görünür pencere geldiğinde kenarlıklar geri gelir; tam ekran her zaman kenarlıksızdır. `false` ile sabit `border` kalınlığına dönülür.
 
 Pil kaynağı `/sys/class/power_supply/BAT0/capacity` olarak ayarlıdır. Keep-awake modülü `$HOME/.cache/keep-awake/running.lock` dosyasının kilit durumunu okur. Modüller shell komutu başlatmaz.
 
