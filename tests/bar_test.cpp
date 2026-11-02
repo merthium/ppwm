@@ -108,7 +108,7 @@ void run(Display *display) {
     send(display, second, "_NET_ACTIVE_WINDOW", 1);
     wait_until([&] { return property(display, root, "_NET_ACTIVE_WINDOW") == second; },
                "select second window");
-    constexpr int left = 9 * ppwm::config::tag_width + 50;
+    constexpr int left = 9 * ppwm::config::tag_width + ppwm::config::layout_width;
     XColor selected_color{}, exact{};
     require(XAllocNamedColor(display, DefaultColormap(display, DefaultScreen(display)),
                              ppwm::config::accent, &selected_color, &exact),

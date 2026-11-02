@@ -33,11 +33,11 @@ int main() {
         const auto hash = [&] {
             XWindowAttributes a{};
             XGetWindowAttributes(d, bar, &a);
-            auto *image = XGetImage(d, bar, a.width - 100, 0, 100, 24, AllPlanes, ZPixmap);
+            auto *image = XGetImage(d, bar, a.width - 100, 0, 100, a.height, AllPlanes, ZPixmap);
             if (!image)
                 throw std::runtime_error("bar capture");
             unsigned long result = 5381;
-            for (int y = 0; y < 24; ++y)
+            for (int y = 0; y < a.height; ++y)
                 for (int x = 0; x < 100; ++x)
                     result = result * 33 + XGetPixel(image, x, y);
             XDestroyImage(image);

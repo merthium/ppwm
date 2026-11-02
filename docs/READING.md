@@ -10,7 +10,7 @@ MapRequest → handle_event → manage_window → arrange → set_geometry
 
 `Client`, yönetilen pencerenin durumudur. `Window` ise X sunucusunun verdiği sayısal kimliktir; bir C++ nesnesi veya sahip olunan pointer değildir. `clients_` vektörü Client nesnelerinin sahibidir. Eleman ekleyip silmek pointer'ları geçersiz kılabileceğinden, bir işlem dışına Client pointer'ı saklanmaz. Odak ve sürükleme durumu pencere kimliği tutar.
 
-`layout.hpp` ile devam et. Bu dosyada X11 çağrısı yoktur: bir ekran alanı ve pencere sayısı alıp dikdörtgenler üretir. Yerleşim testleri gerçek X sunucusu olmadan çalışabilir. Tiled kutular kenarlıkları içerir; client boyutuna çevrilirken kenarlıklar düşülür. Floating geometri doğrudan client boyutudur.
+`ppwm.hpp` içindeki geometri bölümüyle devam et. Bu yardımcılar X11 çağrısı yapmaz: bir ekran alanı ve pencere sayısı alıp dikdörtgenler üretir. Yerleşim testleri gerçek X sunucusu olmadan çalışabilir. Tiled kutular kenarlıkları içerir; client boyutuna çevrilirken kenarlıklar düşülür. Floating geometri doğrudan client boyutudur.
 
 Modern C++ özellikleri burada belirli sorunları çözmek için kullanılır:
 
@@ -28,6 +28,6 @@ Odak kodunda iki ayrıntı özellikle önemlidir. Gizlenen pencere de `UnmapNoti
 
 Tray, WM'nin içinde ayrı bir küçük pencere yöneticisi gibidir. İkon başka bir uygulamanın penceresidir; `SystemTray` onu kendi konteynerine alır ve XEmbed mesajlarıyla haberleşir. Save-set, ppwm beklenmedik biçimde kapanırsa ikonun uygulamayla birlikte yok olmasını önler.
 
-Bir değişiklik için önce en küçük ilgili dosyayı seç. Yeni yerleşim `layout.hpp`, yeni kısayol `config.hpp`, yeni durum sağlayıcısının gövdesi `bar_modules.cpp` içindedir. Çekirdek yalnızca pencere davranışı değişiyorsa değişmelidir.
+Yeni yerleşim fonksiyonu `ppwm.hpp` geometri bölümüne, kaydı `config.hpp` içindeki `layouts` tablosuna eklenir. Kısayollar ve durum sağlayıcılarının kayıtları da `config.hpp`, sağlayıcıların gövdeleri `ppwm.cpp` içindedir. Çekirdek yalnızca pencere davranışı değişiyorsa değişmelidir.
 
 Protokol ayrıntıları için [XEmbed](https://specifications.freedesktop.org/xembed/latest-single/) ve [System Tray](https://specifications.freedesktop.org/systemtray/latest-single/) standartları temel referanslardır. Kodun desteklemediği ayrıntılar README kapsam bölümünde belirtilir.

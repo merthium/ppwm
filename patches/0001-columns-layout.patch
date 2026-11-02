@@ -1,10 +1,12 @@
---- a/src/layout.hpp
-+++ b/src/layout.hpp
-@@ -65,9 +65,23 @@
-     return rectangles;
- }
- 
-+// Equal-width columns use the same pure geometry contract as tile.
+--- a/src/ppwm.hpp
++++ b/src/ppwm.hpp
+@@ -157,6 +157,20 @@
+     column(area.x, master_width, masters);
+     column(split ? area.x + master_width + gap : area.x,
+            split ? area.width - master_width - gap : area.width, stack_count);
++    return rectangles;
++}
++
 +inline std::vector<Rect> columns(Rect area, int count, double, int gap, int = 1) {
 +    if (count <= 0) return {};
 +    gap = std::clamp(gap, 0, std::max(0, std::min((area.width-count)/(count+1), (area.height-1)/2)));
@@ -16,15 +18,28 @@
 +        rectangles.push_back({area.x+gap*(index+1)+left, area.y+gap,
 +                              std::max(1,right-left), std::max(1,area.height-2*gap)});
 +    }
-+    return rectangles;
-+}
- struct Layout {
-     const char *symbol;
-     LayoutFn arrange; // nullptr selects floating layout.
- };
+     return rectangles;
+ }
+ 
+--- a/src/config.hpp
++++ b/src/config.hpp
+@@ -22,7 +22,7 @@
+ inline constexpr bool center_bar_text = true;
+ inline constexpr int tray_icon_size = 20, tray_spacing = 2;
+ inline constexpr int layout_width = 35, text_padding = 11, tag_padding = 5;
 -inline constexpr std::array layouts{Layout{"t", tile}, Layout{"f", nullptr}, Layout{"m", monocle}};
 +inline constexpr std::array layouts{Layout{"t", tile}, Layout{"f", nullptr}, Layout{"m", monocle}, Layout{"|||", columns}};
- } // namespace ppwm
+ inline constexpr int default_master_count = 1;
+ inline constexpr std::size_t default_layout = 0, default_previous_layout = 1;
+ inline constexpr bool default_bar_visible = true, focus_follows_mouse = true, warp_pointer = true;
+@@ -62,6 +62,7 @@
+     Rule{"Emacs", nullptr, false, 2, false}, Rule{"popup", nullptr, true, 0, false},
+     Rule{"Blueman-manager", nullptr, true, 0, false}, Rule{"URxvt", "scratchpad", true, 0, true}};
+ inline constexpr Binding keys[]{
++    {MOD | ControlMask, XK_c, Action::Layout, 3},
+     {MOD, XK_1, Action::ViewTag, 1},
+     {MOD | ControlMask, XK_1, Action::ToggleViewTag, 1},
+     {MOD | ShiftMask, XK_1, Action::SendTag, 1},
 --- a/tests/layout_test.cpp
 +++ b/tests/layout_test.cpp
 @@ -38,5 +38,8 @@
@@ -36,13 +51,3 @@
 +    check(columns_result[1]==Rect{338,32,323,760} && columns_result[2]==Rect{669,32,323,760});
      std::cout << "layout invariants passed\n";
  }
---- a/src/config.hpp
-+++ b/src/config.hpp
-@@ -48,6 +48,7 @@
-     Rule{"Emacs", nullptr, false, 2, false}, Rule{"popup", nullptr, true, 0, false},
-     Rule{"Blueman-manager", nullptr, true, 0, false}, Rule{"URxvt", "scratchpad", true, 0, true}};
- inline constexpr Binding keys[]{
-+    {MOD | ControlMask, XK_c, Action::Layout, 3},
-     {MOD, XK_1, Action::ViewTag, 1},
-     {MOD | ControlMask, XK_1, Action::ToggleViewTag, 1},
-     {MOD | ShiftMask, XK_1, Action::SendTag, 1},

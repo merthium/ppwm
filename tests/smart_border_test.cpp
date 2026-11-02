@@ -1,3 +1,4 @@
+#include "config.hpp"
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <chrono>
@@ -50,7 +51,7 @@ int main() {
             [&] {
                 const auto x = attributes(a);
                 return x.map_state == IsViewable && x.border_width == 0 && x.width == 1024 &&
-                       x.height == 744;
+                       x.height == (768 - ppwm::config::bar_height);
             },
             "single tiled client fills workarea without border");
         Window b = XCreateSimpleWindow(d, root, 40, 40, 200, 100, 0, 0, 0);
@@ -100,7 +101,7 @@ int main() {
         wait(
             [&] {
                 const auto x = attributes(a);
-                return x.border_width == 0 && x.height == 744;
+                return x.border_width == 0 && x.height == (768 - ppwm::config::bar_height);
             },
             "fullscreen exit respects smartborder");
         key("xdotool key --clearmodifiers alt+shift+space");
@@ -117,7 +118,7 @@ int main() {
         wait(
             [&] {
                 const auto x = attributes(a);
-                return x.x == 784 && x.y == 564;
+                return x.x == 784 && x.y == (768 - ppwm::config::bar_height - 180);
             },
             "floating edge constraints use the actual zero-width border");
         XDestroyWindow(d, a);

@@ -1,6 +1,6 @@
 # Kaynak patch iş akışı
 
-ppwm kaynak üzerinden genişletilir. Yeni yerleşimler `layouts`, yeni bar sağlayıcıları `config.hpp` içindeki `status_modules`, yeni kısayollar aynı dosyadaki `keys` tablosuna eklenir. Kararlı bir ikili eklenti ABI'si yoktur.
+ppwm kaynak üzerinden genişletilir. Yeni yerleşimler `config.hpp` içindeki `layouts`, yeni bar sağlayıcıları `config.hpp` içindeki `status_modules`, yeni kısayollar aynı dosyadaki `keys` tablosuna eklenir. Kararlı bir ikili eklenti ABI'si yoktur.
 
 Örnek eşit kolon patch'i:
 
@@ -18,7 +18,7 @@ git apply -R patches/0001-columns-layout.patch
 cmake --build build -j
 ```
 
-Yerleşim imzası `std::vector<Rect>(Rect area, int count, double ratio, int gap, int masters)` şeklindedir. Sonuçlar kenarlık dahil kutulardır. Pencere sayısı sıfırken boş sonuç döndür. Normal ekranlarda sınırları ve çakışmayı test et. Tiled/geçici geometri için X11'e doğrudan erişme.
+Yerleşim fonksiyonları `ppwm.hpp` geometri bölümündedir. Yerleşim imzası `std::vector<Rect>(Rect area, int count, double ratio, int gap, int masters)` şeklindedir. Sonuçlar kenarlık dahil kutulardır. Pencere sayısı sıfırken boş sonuç döndür. Normal ekranlarda sınırları ve çakışmayı test et. Tiled/geçici geometri için X11'e doğrudan erişme.
 
 Bar sağlayıcısı `std::string(const BarState&)` döndürür; `BarModule` kaydı sağlayıcı ve isteğe bağlı tıklama komutunu tutar. Modüller ana iş parçacığında, periyodik olarak çalışır. Ağ erişimi, shell komutu ve uzun bekleme ekleme. Yavaş kaynaklar için ayrı veri üreticisi ve önbellek kullan.
 

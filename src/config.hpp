@@ -1,7 +1,7 @@
 #pragma once
-#include "config_types.hpp"
-#include "keys.hpp"
+#include "ppwm.hpp"
 #include <X11/XF86keysym.h>
+#include <X11/cursorfont.h>
 #include <X11/keysym.h>
 #include <array>
 #include <chrono>
@@ -11,13 +11,18 @@ inline constexpr unsigned MOD = Mod1Mask; // Alt; use Mod4Mask for Super.
 inline constexpr std::array<std::string_view, 5> terminal_classes{"urxvt", "xterm", "st",
                                                                   "alacritty", "kitty"};
 inline constexpr bool swallow_automatic = true;
-inline constexpr int bar_height = 24, border = 2, gap = 0, tag_width = 32, snap = 20;
+inline constexpr int bar_height = 23, border = 2, gap = 0, tag_width = 23, snap = 20;
+// Window behavior and input
+inline constexpr int minimum_float_size = 40, event_batch_limit = 256;
+inline constexpr unsigned normal_cursor = XC_left_ptr, move_cursor = XC_fleur,
+                          resize_cursor = XC_sizing;
 inline constexpr bool smart_borders = true;
 inline constexpr bool tray_enabled = true;
 inline constexpr auto tray_retry_interval = std::chrono::milliseconds(2000);
 inline constexpr bool center_bar_text = true;
 inline constexpr int tray_icon_size = 20, tray_spacing = 2;
-inline constexpr int layout_width = 50, text_padding = 7;
+inline constexpr int layout_width = 35, text_padding = 11, tag_padding = 5;
+inline constexpr std::array layouts{Layout{"t", tile}, Layout{"f", nullptr}, Layout{"m", monocle}};
 inline constexpr int default_master_count = 1;
 inline constexpr std::size_t default_layout = 0, default_previous_layout = 1;
 inline constexpr bool default_bar_visible = true, focus_follows_mouse = true, warp_pointer = true;
@@ -32,11 +37,13 @@ inline constexpr bool use_slstatus = true;
 inline constexpr const char *slstatus_click = nullptr;
 inline constexpr auto status_interval = std::chrono::milliseconds(2000);
 inline constexpr char font[] =
-    "Lilex Nerd Font Mono:style=Regular:pixelsize=14:antialias=true:hinting=true";
-inline constexpr char background[] = "#000000", foreground[] = "#adb4b8", accent[] = "#232c30";
-inline constexpr char bar_muted[] = "#626d73", bar_bright[] = "#e4ecef";
-inline constexpr char bar_title_background[] = "#0b0e10", bar_divider[] = "#252d31";
-inline constexpr char normal_border[] = "#202629", selected_border[] = "#78888f";
+    "Fragment Mono:style=Regular:size=14:antialias=true:hinting=true:embolden=true";
+inline constexpr char fallback_font[] =
+    "Lilex Nerd Font Mono:style=Regular:size=13:antialias=true:hinting=true";
+inline constexpr char background[] = "#000000", foreground[] = "#a0a0a0", accent[] = "#202020";
+inline constexpr char bar_muted[] = "#606060", bar_bright[] = "#a0a0a0";
+inline constexpr char bar_title_background[] = "#101010", bar_divider[] = "#202020";
+inline constexpr char normal_border[] = "#202020", selected_border[] = "#808080";
 inline constexpr char terminal[] = "urxvtc +j || urxvt +j";
 inline constexpr char launcher[] =
     "dmenu_run -m 0 -nb '#000000' -nf '#a0a0a0' -sb '#202020' -sf '#a0a0a0' -p '>>>'";
@@ -173,4 +180,7 @@ inline constexpr std::array<BarModule, 3> status_modules{
      {bar_modules::keep_awake, nullptr}}};
 static_assert(tag_width > 0 && layout_width > 0 && text_padding >= 0);
 static_assert(default_master_count >= 0);
+static_assert(minimum_float_size > 0 && event_batch_limit > 0);
+static_assert(bar_height > 0 && border >= 0 && gap >= 0 && tag_padding >= 0);
+static_assert(default_layout < layouts.size() && default_previous_layout < layouts.size());
 } // namespace ppwm::config

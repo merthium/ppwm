@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     }
     try {
         std::vector<Panel> panels{
-            {0, "src/layout.hpp  /  C++20", read_lines(argv[1]), true},
+            {0, "src/config.hpp  /  C++20", read_lines(argv[1]), true},
             {0, "build + test  /  captured command output", read_lines(argv[2]), false},
             {0, "ppwm  /  keyboard", {
                 "A small, patchable X11 window manager.", "",

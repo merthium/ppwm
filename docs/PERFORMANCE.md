@@ -146,3 +146,20 @@ Nested integration and second-WM rejection passed.
 ```
 
 Bu tek koşu önceki kayıtlarla hız karşılaştırması değildir. Kenarlık kalınlığı istemcide tutulur; yalnızca değiştiğinde X sunucusuna yeni kalınlık gönderilir. Görünür pencere sayısı yerleşim sırasında hesaplanır; barın periyodik döngüsüne yeni pencere sorgusu eklenmez.
+
+## Dört dosyalı kaynak yapısı ve kompakt bar
+
+Uygulama `main.cpp`, `config.hpp`, `ppwm.hpp`, `ppwm.cpp` dosyalarında toplandı. Beş birim testi ve tam Xephyr paketi geçti. Güncellenen kolon patch'i ayrı, temiz bir dizinde uygulanıp Release olarak derlendi; config ve layout testleri geçti.
+
+Fragment Mono 14 punto (`embolden=true`), Lilex Nerd Font Mono 13 punto glif yedeği ve nötr gri palet kullanılıyor. Bar yüksekliği 23 px, etiket genişliği 23 px, yerleşim alanı 35 px. Bunlar yerel dwm fontunun Xft ölçülerine göre seçildi. Font ölçümü ve çizimi aynı glif/font gruplarını kullanır.
+
+```text
+Smartborder transitions passed
+64 windows: map 76.0887 ms; 10000 configure requests + tag barrier: 251.496 ms; restore/destroy 8.07896 ms
+Stress WM CPU seconds: 0.050
+Idle CPU seconds / 3 wall seconds: 0.000; VmRSS: 14832 kB
+Restart executes replacement binary.
+Nested integration and second-WM rejection passed.
+```
+
+Ölçüm tek koşudur; önceki sürümlere karşı hız iddiası içermez.

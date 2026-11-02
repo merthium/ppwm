@@ -1,3 +1,4 @@
+#include "config.hpp"
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -92,11 +93,14 @@ int main() {
     XGetWindowAttributes(d, b, &bb);
     check(aa.map_state == IsViewable && bb.map_state == IsViewable, "mapped clients");
     check(aa.x + aa.width <= bb.x || bb.x + bb.width <= aa.x, "automatic nonoverlapping tiling");
-    check(aa.y == 0 && bb.y == 0 && aa.height + 2 * aa.border_width <= 744,
+    check(aa.y == 0 && bb.y == 0 &&
+              aa.height + 2 * aa.border_width <= (768 - ppwm::config::bar_height),
           "bottom bar reserves work area with zero gaps");
     XWindowAttributes bar_attr{};
     XGetWindowAttributes(d, bar, &bar_attr);
-    check(bar_attr.y == 744 && bar_attr.height == 24, "dwm bottom bar position");
+    check(bar_attr.y == (768 - ppwm::config::bar_height) &&
+              bar_attr.height == ppwm::config::bar_height,
+          "dwm bottom bar position");
     auto before = bar_hash();
     XStoreName(d, b, "periodic title refresh");
     XSync(d, False);
@@ -191,7 +195,9 @@ int main() {
           "fullscreen keeps focus and stacking");
     send(b, "_NET_WM_STATE", 0, static_cast<long>(atom("_NET_WM_STATE_FULLSCREEN")));
     XGetWindowAttributes(d, b, &bb);
-    check(bb.height + 2 * bb.border_width <= 744 && bb.border_width == 2, "exit fullscreen");
+    check(bb.height + 2 * bb.border_width <= (768 - ppwm::config::bar_height) &&
+              bb.border_width == 2,
+          "exit fullscreen");
     send(a, "_NET_WM_DESKTOP", 0);
     send(a, "_NET_WM_STATE", 1, static_cast<long>(atom("_NET_WM_STATE_FULLSCREEN")));
     send(b, "_NET_WM_STATE", 1, static_cast<long>(atom("_NET_WM_STATE_FULLSCREEN")));

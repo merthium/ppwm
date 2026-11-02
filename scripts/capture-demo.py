@@ -71,7 +71,7 @@ def main():
                 time.sleep(0.5)
                 if wm.poll() is not None:
                     raise RuntimeError("ppwm exited before demo launch")
-                client = subprocess.Popen([str(demo), str(ROOT / "src/layout.hpp"), str(transcript)],
+                client = subprocess.Popen([str(demo), str(ROOT / "src/config.hpp"), str(transcript)],
                                           env=env, stdout=log, stderr=log)
                 processes.append(client)
                 time.sleep(3)
